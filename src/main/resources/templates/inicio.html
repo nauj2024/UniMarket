@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>UniMarket</title>
+</head>
+<body>
+    <h1>UniMarket</h1>
+    <p>Bienvenido, <span th:text="${nombre}"></span>.</p>
+    <p>Ingresaste con <span th:text="${correo}"></span>.</p>
+    <form th:action="@{/logout}" method="post">
+        <button type="submit">Cerrar sesión</button>
+    </form>
+</body>
+</html>

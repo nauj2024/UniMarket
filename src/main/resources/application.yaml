@@ -1,0 +1,14 @@
+spring:
+  config:
+    import: optional:file:./config/application-local.yaml
+  application:
+    name: unimarket
+  datasource:
+    url: jdbc:sqlite:unimarket.db
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      connection-init-sql: PRAGMA foreign_keys=ON
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: validate

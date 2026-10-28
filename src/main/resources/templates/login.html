@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ingresar | UniMarket</title>
+</head>
+<body>
+    <h1>UniMarket</h1>
+    <p>Ingresa con tu cuenta institucional @unal.edu.co.</p>
+    <p th:if="${param.error}" role="alert">No se pudo iniciar sesión. Usa una cuenta institucional de la UNAL e intenta de nuevo.</p>
+    <p th:if="${param.logout}">Cerraste tu sesión en UniMarket.</p>
+    <a th:if="${googleConfigured}" th:href="@{/oauth2/authorization/google}">Ingresar con Google</a>
+    <p th:unless="${googleConfigured}">El inicio de sesión con Google aún no está configurado.</p>
+</body>
+</html>
