@@ -1,7 +1,15 @@
 # UniMarket
 
-preview main  [here.](https://unimarket-main.onrender.com/)
+## Cómo Ejecutar en Codespaces 
 
+1. Abre el Codespaces
+2. Abre la terminal y ejecuta: ´./mvnw spring-boot:run -Dspring-boot.run.profiles=dev´
+3. Ve a la pestaña de puertos
+4. Selecciona el globo de navegación y abre UniMarket
+
+## Cómo abrir el Orender
+
+preview main  [here.](https://unimarket-main.onrender.com/)
 
 ## Cómo descargar y correr el proyecto en local
 
