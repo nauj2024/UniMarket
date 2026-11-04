@@ -121,7 +121,12 @@ public class SolicitudCompraService {
 
         // Actualizar la última fecha de movimiento en la solicitud
         solicitud.registrarActividad(ahora);
-        return solicitudes.save(solicitud);
+        solicitudes.save(solicitud);
+        Usuario destinatario = esCliente ? solicitud.getServicio().getOfertador() : solicitud.getCliente();
+        notificador.notificar(destinatario, solicitud, TipoNotificacion.CONTRAPROPUESTA_RECIBIDA,
+                autor.getNombre() + " envió una contrapropuesta para «" + solicitud.getServicio().getTitulo()
+                        + "» a " + pesos(tarifa) + " por hora (" + intensidad + " horas por semana).");
+        return solicitud;
     }
 
     /** La contraparte acepta la propuesta vigente: la solicitud y el servicio pasan a estar ACTIVA/ACTIVO. */
@@ -152,6 +157,13 @@ public class SolicitudCompraService {
         Servicio servicio = solicitud.getServicio();
         servicio.activar();
         servicios.save(servicio);
+
+        String mensaje = "Acuerdo confirmado para «" + servicio.getTitulo() + "» entre "
+                + solicitud.getCliente().getNombre() + " y " + servicio.getOfertador().getNombre()
+                + " a " + pesos(ultimaPropuesta.getTarifaPorHora()) + " por hora ("
+                + ultimaPropuesta.getIntensidadHoraria() + " horas por semana). El servicio está activo.";
+        notificador.notificar(solicitud.getCliente(), solicitud, TipoNotificacion.ACUERDO_CONFIRMADO, mensaje);
+        notificador.notificar(servicio.getOfertador(), solicitud, TipoNotificacion.ACUERDO_CONFIRMADO, mensaje);
 
         return solicitud;
     }

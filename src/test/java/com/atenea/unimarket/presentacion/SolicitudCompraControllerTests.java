@@ -88,6 +88,32 @@ class SolicitudCompraControllerTests {
     }
 
     @Test
+    void contrapropuestaYAceptacionAparecenEnNotificacionesConEnlaceALaSolicitud() throws Exception {
+        Integer solicitudId = solicitudes.crear(betoId, servicioId, null).getId();
+
+        mvc.perform(post("/solicitudes/" + solicitudId + "/contraproponer").with(ana()).with(csrf())
+                        .param("tarifaPorHora", "30000").param("intensidadHoraria", "6"))
+                .andExpect(redirectedUrl("/solicitudes/" + solicitudId))
+                .andExpect(flash().attributeExists("mensaje"));
+        mvc.perform(get("/notificaciones").with(beto()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("envió una contrapropuesta")))
+                .andExpect(content().string(containsString("$30.000 COP")))
+                .andExpect(content().string(containsString("/solicitudes/" + solicitudId)));
+
+        mvc.perform(post("/solicitudes/" + solicitudId + "/aceptar").with(beto()).with(csrf()))
+                .andExpect(redirectedUrl("/solicitudes/" + solicitudId))
+                .andExpect(flash().attributeExists("mensaje"));
+        for (RequestPostProcessor usuario : List.of(ana(), beto())) {
+            mvc.perform(get("/notificaciones").with(usuario))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("Acuerdo confirmado")))
+                    .andExpect(content().string(containsString("6 horas por semana")))
+                    .andExpect(content().string(containsString("/solicitudes/" + solicitudId)));
+        }
+    }
+
+    @Test
     void elDetalleOfreceSolicitarSoloAQuienNoEsElOfertador() throws Exception {
         mvc.perform(get("/servicios/" + servicioId).with(beto()))
                 .andExpect(content().string(containsString("/servicios/" + servicioId + "/solicitar")));
