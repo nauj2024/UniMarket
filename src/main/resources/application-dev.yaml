@@ -1,3 +1,5 @@
 spring:
   datasource:
     url: jdbc:sqlite:unimarket-dev.db
+server:
+  forward-headers-strategy: framework
