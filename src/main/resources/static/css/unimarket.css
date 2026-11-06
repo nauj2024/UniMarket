@@ -41,39 +41,51 @@ h2 { font-size: 1.25rem; line-height: 1.3; }
 
 :focus-visible { outline: 2px solid var(--um-focus); outline-offset: 2px; }
 
-/* App header */
-.app-header { background: var(--um-surface); border-bottom: 4px solid var(--unal-green); }
-.app-header-inner {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: .5rem 1.5rem;
-    padding-block: .75rem;
+/* Bootstrap handles layout, links, buttons and the account menu. */
+.app-header {
+    --bs-navbar-bg: var(--um-surface);
+    --bs-navbar-color: var(--unal-gray);
+    --bs-navbar-active-color: var(--unal-green-deep);
+    --bs-navbar-brand-font-size: 1.375rem;
+    --bs-navbar-brand-font-weight: 800;
 }
-.app-brand {
-    color: var(--um-ink);
-    font-size: 1.35rem;
-    font-weight: 750;
-    letter-spacing: -.06em;
-    text-decoration: none;
+.app-header-inner { min-height: 4rem; }
+.app-brand { letter-spacing: -.06em; }
+.app-brand span { color: var(--unal-green-ink); }
+.app-icon { flex-shrink: 0; width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.app-avatar { width: 2.25rem; height: 2.25rem; color: var(--unal-green-deep); }
+.app-account > button { min-width: 2.75rem; min-height: 2.75rem; }
+.app-account .menu {
+    --bs-menu-bg: var(--um-surface);
+    --bs-menu-item-padding-y: .75rem;
+    width: min(18rem, calc(100vw - 2rem));
 }
-a.app-brand:hover { color: var(--unal-green-ink); }
-.app-nav ul { display: flex; flex-wrap: wrap; gap: .25rem; margin: 0; padding: 0; list-style: none; }
-.app-nav a {
-    display: block;
-    padding: .375rem .75rem;
-    border-radius: .375rem;
-    color: var(--unal-gray);
-    font-weight: 600;
-    text-decoration: none;
-}
-.app-nav a:hover { background: var(--um-canvas); color: var(--um-ink); }
-.app-nav a[aria-current="page"] { background: var(--unal-green-wash); color: var(--unal-green-deep); }
-.app-logout { margin-inline-start: auto; }
 
-@media (width < 768px) {
-    .app-nav { order: 3; flex-basis: 100%; }
-    .app-nav a { padding-inline: .5rem; }
+/* Bottom navigation is the only layout Bootstrap does not supply. */
+.app-nav {
+    padding: .375rem max(.25rem, env(safe-area-inset-right, 0px)) max(.375rem, env(safe-area-inset-bottom, 0px)) max(.25rem, env(safe-area-inset-left, 0px));
+    border-top: 1px solid var(--um-line);
+    background: var(--um-surface);
+}
+.app-nav .navbar-nav { max-width: 40rem; }
+.app-nav .nav-link { min-height: 3.75rem; font-size: .625rem; }
+.app-nav-glyph { width: 2.75rem; height: 1.875rem; }
+.app-nav .active .app-nav-glyph { background: var(--unal-green-wash); }
+.app-nav .app-nav-publish .app-nav-glyph { background: var(--unal-green); color: var(--um-on-green); }
+
+@media (width < 1024px) {
+    html:has(.app-nav) { scroll-padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }
+    body:has(.app-nav) { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)); }
+}
+@media (width >= 1024px) {
+    .app-header { --bs-navbar-brand-font-size: 1.5rem; }
+    .app-header-inner { min-height: 5rem; }
+    .app-nav { position: static; flex: 1; padding: 0; border: 0; background: none; }
+    .app-nav .navbar-nav { max-width: none; }
+    .app-nav .nav-item { flex: none; }
+    .app-nav .nav-link { min-height: 5rem; font-size: .9375rem; font-weight: 600; border-radius: 0; border-bottom: 3px solid transparent; }
+    .app-nav .nav-link.active { border-bottom-color: var(--unal-green); }
+    .app-nav-notifications .nav-link { min-height: 2.75rem; border: 0; border-radius: .5rem; }
 }
 
 /* Page frame */
@@ -231,7 +243,7 @@ abbr[title="obligatorio"] { color: var(--um-error); text-decoration: none; curso
 .catalog-results-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem 1.5rem; margin-bottom: 1rem; color: var(--unal-gray); }
 .catalog-results-head strong { color: var(--um-ink); }
 .catalog-results-head a { margin-inline-start: .5rem; font-weight: 600; }
-.catalog-sort { display: flex; align-items: center; gap: .5rem; }
+.catalog-sort { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
 
 /* Catalog cards: the title link stretches over the whole card. */
 .service-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 1rem; margin: 0; padding: 0; list-style: none; }
