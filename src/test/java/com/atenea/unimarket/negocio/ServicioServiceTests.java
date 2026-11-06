@@ -63,10 +63,10 @@ class ServicioServiceTests {
                 "2026-01-01 10:00:00", antiguo.getId());
 
         for (String orden : new String[] {null, "", "desconocido", "ANTIGUOS"}) {
-            assertThat(servicio.buscarDisponibles(List.of(), null, OrdenServicio.desde(orden)))
+            assertThat(servicio.buscarDisponibles(List.of(), null, OrdenServicio.desde(orden), 0).getContent())
                     .extracting(Servicio::getId).containsExactly(antiguo.getId(), reciente.getId());
         }
-        assertThat(servicio.buscarDisponibles(List.of(), null, OrdenServicio.desde("RECIENTES")))
+        assertThat(servicio.buscarDisponibles(List.of(), null, OrdenServicio.desde("RECIENTES"), 0).getContent())
                 .extracting(Servicio::getId).containsExactly(reciente.getId(), antiguo.getId());
     }
 
@@ -75,12 +75,12 @@ class ServicioServiceTests {
         Servicio primero = servicio.publicar(anaId, datos(25000, 4));
         Categoria otra = servicio.categorias().stream().filter(c -> !c.getId().equals(tutorias.getId())).findFirst().orElseThrow();
         Servicio segundo = servicio.publicar(anaId, new DatosServicio(otra.getId(), "Diseño", "Otro", 30000, 2, null, null, List.of()));
-        assertThat(servicio.buscarDisponibles(List.of(tutorias.getId(), otra.getId()), "", OrdenServicio.ANTIGUOS)).hasSize(2);
-        assertThat(servicio.buscarDisponibles(List.of(tutorias.getId()), " ana ", OrdenServicio.ANTIGUOS))
+        assertThat(servicio.buscarDisponibles(List.of(tutorias.getId(), otra.getId()), "", OrdenServicio.ANTIGUOS, 0).getContent()).hasSize(2);
+        assertThat(servicio.buscarDisponibles(List.of(tutorias.getId()), " ana ", OrdenServicio.ANTIGUOS, 0).getContent())
                 .extracting(Servicio::getId).containsExactly(primero.getId());
-        assertThat(servicio.buscarDisponibles(List.of(otra.getId()), "Título", OrdenServicio.ANTIGUOS)).isEmpty();
+        assertThat(servicio.buscarDisponibles(List.of(otra.getId()), "Título", OrdenServicio.ANTIGUOS, 0).getContent()).isEmpty();
         jdbc.update("UPDATE servicio SET estado = 'ACTIVO' WHERE id = ?", segundo.getId());
-        assertThat(servicio.buscarDisponibles(List.of(), null, OrdenServicio.ANTIGUOS))
+        assertThat(servicio.buscarDisponibles(List.of(), null, OrdenServicio.ANTIGUOS, 0).getContent())
                 .extracting(Servicio::getId).containsExactly(primero.getId());
     }
 
@@ -88,10 +88,10 @@ class ServicioServiceTests {
     void buscaCaracteresEspecialesLiteralmenteYConservaMayusculasConTilde() {
         Servicio publicado = servicio.publicar(anaId, new DatosServicio(tutorias.getId(), "ÁLGEBRA 100%_", "Otro", 25000, 4, null, null, List.of()));
         for (String texto : List.of("ÁLGEBRA", "%_")) {
-            assertThat(servicio.buscarDisponibles(List.of(), texto, OrdenServicio.ANTIGUOS))
+            assertThat(servicio.buscarDisponibles(List.of(), texto, OrdenServicio.ANTIGUOS, 0).getContent())
                     .extracting(Servicio::getId).containsExactly(publicado.getId());
         }
-        assertThat(servicio.buscarDisponibles(List.of(), "100_", OrdenServicio.ANTIGUOS)).isEmpty();
+        assertThat(servicio.buscarDisponibles(List.of(), "100_", OrdenServicio.ANTIGUOS, 0).getContent()).isEmpty();
     }
 
     @Test

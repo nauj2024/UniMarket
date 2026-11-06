@@ -204,7 +204,6 @@ abbr[title="obligatorio"] { color: var(--um-error); text-decoration: none; curso
 /* Catalog filters: search bar, category chips (extra ones behind "Ver todas") and a results header. */
 .catalog-filters { display: grid; gap: 1rem; margin-bottom: 1.5rem; }
 .catalog-search { display: flex; gap: .75rem; }
-.catalog-search .form-control { flex: 1; min-width: 0; }
 .catalog-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; border: 0; }
 .catalog-chips details, .catalog-chips details::details-content { display: contents; }
 .catalog-chips details[open] > summary { display: none; }
@@ -228,6 +227,50 @@ abbr[title="obligatorio"] { color: var(--um-error); text-decoration: none; curso
 .chip:has(input:focus-visible) { outline: 2px solid var(--um-focus); outline-offset: 2px; }
 .chip-more { border-style: dashed; color: var(--unal-green-ink); font-weight: 600; list-style: none; }
 .chip-more::-webkit-details-marker { display: none; }
+/* Keep loading feedback inside the input, with no movement of the results. */
+.catalog-search-field { position: relative; flex: 1; min-width: 0; }
+.catalog-search-field input { width: 100%; min-height: 2.75rem; padding-inline-end: 2.5rem; }
+.catalog-search-field[data-has-query="true"] input { padding-inline-end: 4.75rem; }
+.catalog-search-field input::-webkit-search-cancel-button { appearance: none; -webkit-appearance: none; }
+.catalog-search-clear {
+    position: absolute;
+    inset-inline-end: .125rem;
+    top: 1px;
+    bottom: 1px;
+    width: 2.75rem;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: .375rem;
+    background: transparent;
+    color: var(--unal-gray);
+    font: inherit;
+    font-size: 1.375rem;
+    line-height: 1;
+    cursor: pointer;
+}
+.catalog-search-clear:hover { color: var(--um-ink); background: var(--unal-green-wash); }
+.catalog-search-progress {
+    position: absolute;
+    inset-inline-end: .875rem;
+    top: calc(50% - .5rem);
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--um-line);
+    border-top-color: var(--unal-green-ink);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    animation: catalog-search-spin .7s linear infinite, catalog-search-reveal 0s .4s forwards;
+}
+.catalog-search-field[data-has-query="true"] .catalog-search-progress { inset-inline-end: 3.25rem; }
+@keyframes catalog-search-spin { to { transform: rotate(360deg); } }
+@keyframes catalog-search-reveal { to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+    .catalog-search-progress { animation: catalog-search-reveal 0s .4s forwards; }
+}
+
 .catalog-results-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem 1.5rem; margin-bottom: 1rem; color: var(--unal-gray); }
 .catalog-results-head strong { color: var(--um-ink); }
 .catalog-results-head a { margin-inline-start: .5rem; font-weight: 600; }
@@ -273,6 +316,17 @@ abbr[title="obligatorio"] { color: var(--um-error); text-decoration: none; curso
 }
 .service-card-rate span { color: var(--unal-gray); font-weight: 400; }
 
+/* Removed cards fade in an inert overlay while keyed results move into place. */
+.catalog-results { position: relative; }
+.catalog-ghost-layer { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; pointer-events: none; z-index: 1; }
+@media (prefers-reduced-motion: no-preference) {
+    .service-card { transition: transform 160ms ease-out, background-color 160ms ease-out, border-color 160ms ease-out; }
+    .service-card-category { transition: background-color 160ms ease-out; }
+    .service-card:has(a:focus-visible) { transform: translateY(-2px); }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .service-card:hover { transform: translateY(-2px); border-color: var(--bs-primary-border); }
+}
 .category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 1rem; margin: 0; padding: 0; list-style: none; }
 .category-grid a {
     display: flex;
