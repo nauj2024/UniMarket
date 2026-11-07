@@ -34,6 +34,12 @@
     --bs-link-hover-color: var(--unal-green-deep);
 }
 
+/* Same-origin page navigation uses the browser's crossfade when motion is welcome. */
+@media (prefers-reduced-motion: no-preference) {
+    @view-transition { navigation: auto; }
+    ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 160ms; }
+}
+
 /* Headings share the tight, heavy setting of the login wordmark. */
 h1, h2, h3 { color: var(--um-ink); font-weight: 700; letter-spacing: -.03em; text-wrap: balance; }
 h1 { font-size: clamp(2rem, 3.5vw, 2.75rem); line-height: 1.1; letter-spacing: -.045em; font-weight: 750; }

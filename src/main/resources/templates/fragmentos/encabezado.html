@@ -41,7 +41,7 @@
             </ul>
         </nav>
         <div th:if="${seccion != 'registro'}" class="position-relative flex-shrink-0 app-account">
-            <button type="button" class="btn-text p-1 gap-1" data-bs-toggle="menu" data-bs-placement="bottom-end"
+            <button type="button" class="btn-text p-1 gap-1" data-bs-toggle="menu" data-bs-placement="bottom-end" data-bs-offset="0,12"
                     aria-expanded="false" aria-controls="cuenta-menu" aria-label="Mi cuenta">
                 <span class="app-avatar d-flex align-items-center justify-content-center rounded-circle border bg-subtle-primary fw-semibold fs-xs"
                       aria-hidden="true" th:text="${cuentaNavegacion.iniciales}">U</span>
