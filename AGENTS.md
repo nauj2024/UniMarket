@@ -12,3 +12,7 @@
 ## Project context
 
 * Before implementing or reviewing product behavior, domain models, or architecture, follow [docs/README.md](docs/README.md) to the relevant requirements, design, and unresolved decisions.
+
+## Pull requests
+
+* When writing or updating a PR body, follow the [PR skill](.agents/skills/pr/SKILL.md).
