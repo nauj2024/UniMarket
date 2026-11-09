@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createInbox } from '../../main/resources/static/js/notificaciones-store.js';
+import { createInbox } from '../../main/resources/static/js/notificaciones/store.js';
 
 const initial = { notificaciones: [{ id: 1, leida: false, descartada: false }], sinLeer: 1 };
 const response = data => ({ ok: true, redirected: false, json: async () => data });
