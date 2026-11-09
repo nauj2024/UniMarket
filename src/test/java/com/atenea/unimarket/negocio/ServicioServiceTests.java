@@ -177,6 +177,61 @@ class ServicioServiceTests {
         assertThat(jdbc.update(sql, anaId, categoria, "x".repeat(100), "x".repeat(100))).isEqualTo(1);
     }
 
+        // ---- Busqueda en el catalogo: casos que completan los tests existentes ----
+
+    @Test
+    void elCatalogoNoIncluyeServiciosActivosCerradosNiCancelados() {
+        Integer disponible = publicar(anaId, "Clases de piano", "Descripcion general", tutorias, 20000, null, null);
+        for (String estado : List.of("ACTIVO", "CERRADO", "CANCELADO")) {
+            marcar(publicar(anaId, "Clases de " + estado, "Descripcion general", tutorias, 20000, null, null), estado);
+        }
+
+        assertThat(servicio.disponibles(OrdenServicio.ANTIGUOS)).extracting(Servicio::getId).containsExactly(disponible);
+        assertThat(buscar(null, null, OrdenServicio.ANTIGUOS)).containsExactly(disponible);
+    }
+
+    @Test
+    void buscaElTextoEnTituloDescripcionEspecialidadExperienciaYNombreDelOfertador() {
+        Integer betoId = perfiles.registrar("sub-beto", "beto@unal.edu.co", "Beto", "3109876543", List.of())
+                .getUsuario().getId();
+        Integer porTitulo = publicar(anaId, "Zafiro avanzado", "Descripcion general", tutorias, 20000, null, null);
+        Integer porDescripcion = publicar(anaId, "Segundo", "Incluye quimera semanal", tutorias, 20000, null, null);
+        Integer porEspecialidad = publicar(anaId, "Tercero", "Descripcion general", tutorias, 20000, null, "Topologia");
+        Integer porExperiencia = publicar(anaId, "Cuarto", "Descripcion general", tutorias, 20000, "Cinco anos en Lisboa", null);
+        Integer deBeto = publicar(betoId, "Quinto", "Descripcion general", tutorias, 20000, null, null);
+
+        assertThat(buscar(null, "zafiro", OrdenServicio.ANTIGUOS)).containsExactly(porTitulo);
+        assertThat(buscar(null, "QUIMERA", OrdenServicio.ANTIGUOS)).containsExactly(porDescripcion);
+        assertThat(buscar(null, "topologia", OrdenServicio.ANTIGUOS)).containsExactly(porEspecialidad);
+        assertThat(buscar(null, "lisboa", OrdenServicio.ANTIGUOS)).containsExactly(porExperiencia);
+        assertThat(buscar(null, "Beto", OrdenServicio.ANTIGUOS)).containsExactly(deBeto);
+    }
+
+    @Test
+    void ordenaPorTarifaAscendenteYDescendente() {
+        Integer primero = publicar(anaId, "Uno", "Descripcion general", tutorias, 20000, null, null);
+        Integer segundo = publicar(anaId, "Dos", "Descripcion general", tutorias, 30000, null, null);
+        Integer tercero = publicar(anaId, "Tres", "Descripcion general", tutorias, 10000, null, null);
+
+        assertThat(buscar(null, null, OrdenServicio.ANTIGUOS)).containsExactly(primero, segundo, tercero);
+        assertThat(buscar(null, null, OrdenServicio.TARIFA_ASC)).containsExactly(tercero, primero, segundo);
+        assertThat(buscar(null, null, OrdenServicio.TARIFA_DESC)).containsExactly(segundo, primero, tercero);
+    }
+
+    private Integer publicar(Integer ofertadorId, String titulo, String descripcion, Categoria categoria,
+            int tarifa, String experiencia, String especialidad) {
+        return servicio.publicar(ofertadorId, new DatosServicio(categoria.getId(), titulo, descripcion, tarifa, 4,
+                experiencia, especialidad, List.of())).getId();
+    }
+
+    private List<Integer> buscar(List<Integer> categorias, String texto, OrdenServicio orden) {
+        return servicio.buscarDisponibles(categorias, texto, orden).stream().map(Servicio::getId).toList();
+    }
+
+    private void marcar(Integer servicioId, String estado) {
+        jdbc.update("UPDATE servicio SET estado = ? WHERE id = ?", estado, servicioId);
+    }
+
     private DatosServicio datos(int tarifa, int intensidad) {
         return new DatosServicio(tutorias.getId(), "Título", "Descripción", tarifa, intensidad, null, null, List.of());
     }

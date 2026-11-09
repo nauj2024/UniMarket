@@ -50,6 +50,9 @@ class ServicioControllerTests {
     @Autowired
     UsuarioRepository usuarios;
 
+    @Autowired
+    org.springframework.jdbc.core.JdbcTemplate jdbc;
+
     Integer anaId;
     Integer tutoriasId;
 
@@ -319,6 +322,116 @@ class ServicioControllerTests {
                 .andExpect(content().string(containsString("/servicios/" + id + "/editar")));
         mvc.perform(get("/servicios/" + id).with(como("sub-beto")))
                 .andExpect(content().string(not(containsString("/servicios/" + id + "/editar"))));
+    }
+
+        // ---- Catalogo y busqueda (BUSQUEDA-CLI-H01 y H02) ----
+
+    @Test
+    void elCatalogoSoloListaServiciosDisponibles() throws Exception {
+        publicarCon("Clases de piano", tutoriasId, 20000);
+        marcar(publicarCon("Clases de violin", tutoriasId, 20000), "ACTIVO");
+
+        mvc.perform(get("/servicios").with(ana()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Clases de piano")))
+                .andExpect(content().string(not(containsString("Clases de violin"))))
+                .andExpect(content().string(containsString("antiguos")));
+    }
+
+    @Test
+    void elCatalogoOrdenaPorFechaAscendenteSalvoQueSePidaOtroOrden() throws Exception {
+        publicarCon("Alfa uno", tutoriasId, 30000);
+        publicarCon("Beta dos", tutoriasId, 10000);
+
+        for (String url : List.of("/servicios", "/servicios?orden=no-existe", "/servicios?orden=ANTIGUOS")) {
+            String html = pagina(url);
+            assertThat(html.indexOf("Alfa uno")).isLessThan(html.indexOf("Beta dos"));
+        }
+        String recientes = pagina("/servicios?orden=RECIENTES");
+        assertThat(recientes.indexOf("Beta dos")).isLessThan(recientes.indexOf("Alfa uno"));
+        String porTarifa = pagina("/servicios?orden=TARIFA_ASC");
+        assertThat(porTarifa.indexOf("Beta dos")).isLessThan(porTarifa.indexOf("Alfa uno"));
+    }
+
+    @Test
+    void laBusquedaFiltraPorTextoYPorCategorias() throws Exception {
+        Integer disenoId = categoriaId("Dise");
+        publicarCon("Poster academico", disenoId, 40000);
+        publicarCon("Calculo basico", tutoriasId, 30000);
+
+        mvc.perform(get("/servicios").param("q", "POSTER").with(ana()))
+                .andExpect(content().string(containsString("Poster academico")))
+                .andExpect(content().string(not(containsString("Calculo basico"))));
+        mvc.perform(get("/servicios").param("categoria", tutoriasId.toString()).with(ana()))
+                .andExpect(content().string(containsString("Calculo basico")))
+                .andExpect(content().string(not(containsString("Poster academico"))));
+        mvc.perform(get("/servicios").param("categoria", tutoriasId.toString())
+                        .param("categoria", disenoId.toString()).with(ana()))
+                .andExpect(content().string(containsString("Calculo basico")))
+                .andExpect(content().string(containsString("Poster academico")));
+    }
+
+    @Test
+    void elFormularioConservaLosCriteriosDeBusqueda() throws Exception {
+        publicarCon("Calculo basico", tutoriasId, 30000);
+
+        mvc.perform(get("/servicios").param("q", "calculo").param("categoria", tutoriasId.toString()).with(ana()))
+                .andExpect(content().string(containsString("value=\"calculo\"")))
+                .andExpect(content().string(containsString("checked=\"checked\"")))
+                .andExpect(content().string(containsString("Quitar filtros")));
+    }
+
+    @Test
+    void sinCoincidenciasSugiereAjustarLosCriterios() throws Exception {
+        publicarCon("Calculo basico", tutoriasId, 30000);
+
+        mvc.perform(get("/servicios").param("q", "inexistente").with(ana()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("No encontramos servicios con esos criterios.")))
+                .andExpect(content().string(containsString("quita algunos filtros")))
+                .andExpect(content().string(not(containsString("Calculo basico"))));
+    }
+
+    @Test
+    void sinServiciosNiFiltrosInvitaAPublicar() throws Exception {
+        mvc.perform(get("/servicios").with(ana()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("no hay servicios disponibles")))
+                .andExpect(content().string(containsString("Publicar un servicio")));
+    }
+
+    @Test
+    void elDetalleDeUnServicioNoDisponibleRedirigeAlCatalogoConAviso() throws Exception {
+        Integer id = publicarDeAna();
+        perfiles.registrar("sub-beto", "beto@unal.edu.co", "Beto", "3109876543", List.of());
+
+        mvc.perform(get("/servicios/" + id).with(como("sub-beto"))).andExpect(status().isOk());
+
+        marcar(id, "ACTIVO");
+
+        mvc.perform(get("/servicios/" + id).with(como("sub-beto")))
+                .andExpect(redirectedUrl("/servicios"))
+                .andExpect(flash().attributeExists("aviso"));
+        mvc.perform(get("/servicios/" + id).with(ana())).andExpect(status().isOk());
+    }
+
+    private Integer publicarCon(String titulo, Integer categoriaId, int tarifa) {
+        return catalogo.publicar(anaId, new DatosServicio(categoriaId, titulo, "Descripcion general", tarifa, 4,
+                null, null, List.of())).getId();
+    }
+
+    private Integer categoriaId(String prefijo) {
+        return catalogo.categorias().stream().filter(c -> c.getNombre().startsWith(prefijo))
+                .findFirst().orElseThrow().getId();
+    }
+
+    private void marcar(Integer servicioId, String estado) {
+        jdbc.update("UPDATE servicio SET estado = ? WHERE id = ?", estado, servicioId);
+    }
+
+    private String pagina(String url) throws Exception {
+        return mvc.perform(get(url).with(ana())).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
     }
 
     private Integer publicarDeAna() {
