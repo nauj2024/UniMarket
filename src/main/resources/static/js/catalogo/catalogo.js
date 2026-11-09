@@ -1,17 +1,11 @@
 import { h, render } from 'preact';
-import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useReducer, useRef } from 'preact/hooks';
 import htm from 'htm';
-import { captureCards, reflowCards } from './reflow.js';
+import { catalogReducer, sameCards } from './catalog-state.js';
+import { useCardReflow } from './use-card-reflow.js';
 
 const html = htm.bind(h);
 const pesos = new Intl.NumberFormat('es-CO');
-
-// Compare only what the cards display, in display order.
-function sameCards(previous, next) {
-    const fields = ['id', 'titulo', 'categoria', 'ofertador', 'tarifaPorHora', 'intensidadHoraria'];
-    return previous.length === next.length && previous.every((card, index) =>
-        fields.every(field => card[field] === next[index][field]));
-}
 
 function Catalogo({ initial, categories, orders, api, url }) {
     const readLocation = () => {
@@ -24,31 +18,23 @@ function Catalogo({ initial, categories, orders, api, url }) {
             page: Math.max(0, Number(params.get('pagina')) || 0),
         };
     };
-    const [filters, setFilters] = useState(readLocation);
-    const [results, setResults] = useState(initial);
+    const [state, dispatch] = useReducer(catalogReducer, null, () => ({
+        filters: readLocation(),
+        results: initial,
+        request: null,
+        busy: false,
+        error: '',
+    }));
+    const { filters, results, request, busy, error } = state;
     const searchInput = useRef(null);
-    const cardsList = useRef(null);
-    const ghostLayer = useRef(null);
-    const beforeCards = useRef(null);
-    const stopReflow = useRef(() => {});
-    const [busy, setBusy] = useState(false);
-    const [error, setError] = useState('');
-    const [request, setRequest] = useState(0);
-    const first = useRef(true);
-    const sequence = useRef(0);
+    const animation = useCardReflow(results.servicios);
     const active = useRef(null);
-    const delay = useRef(250);
     const filtered = filters.q.trim() !== '' || filters.categories.length > 0;
 
-    function update(next, immediate = false) {
+    function update(filters, immediate = false) {
         // Invalidate immediately, including during the debounce interval.
-        sequence.current++;
         active.current?.abort();
-        delay.current = immediate ? 0 : 250;
-        setFilters(next);
-        setBusy(true);
-        setError('');
-        setRequest(value => value + 1);
+        dispatch({ type: 'search', filters, immediate });
     }
 
     function paramsFor(value) {
@@ -68,19 +54,16 @@ function Catalogo({ initial, categories, orders, api, url }) {
 
     useLayoutEffect(() => {
         // Use the embedded first batch without a duplicate initial request.
-        if (first.current) {
-            first.current = false;
-            return;
-        }
-        const version = sequence.current;
+        if (!request) return;
         const controller = new AbortController();
+        const { signal } = controller;
         active.current = controller;
         const timer = setTimeout(async () => {
-            const params = paramsFor(filters);
+            const params = paramsFor(request.filters);
             history.replaceState(null, '', `${url}?${params}`);
             try {
                 const response = await fetch(`${api}?${params}`, {
-                    signal: controller.signal,
+                    signal,
                     headers: { Accept: 'application/json' },
                 });
                 if (response.redirected || !response.ok ||
@@ -88,38 +71,18 @@ function Catalogo({ initial, categories, orders, api, url }) {
                     throw new Error('search failed');
                 }
                 const data = await response.json();
-                if (version === sequence.current) {
-                    const cardsChanged = !sameCards(results.servicios, data.servicios);
-                    if (cardsChanged) {
-                        // Capture the current visual position before cancelling an interrupted move.
-                        beforeCards.current = captureCards(cardsList.current);
-                        stopReflow.current();
-                    }
-                    if (cardsChanged || results.total !== data.total ||
-                        results.pagina !== data.pagina || results.hayMas !== data.hayMas) {
-                        setResults(cardsChanged ? data : { ...data, servicios: results.servicios });
-                    }
-                }
-            } catch (failure) {
-                if (failure.name !== 'AbortError' && version === sequence.current) {
-                    setError('No pudimos actualizar los resultados. Vuelve a buscar o recarga la página.');
-                }
-            } finally {
-                if (version === sequence.current) setBusy(false);
+                if (signal.aborted) return;
+                if (!sameCards(results.servicios, data.servicios)) animation.capture();
+                dispatch({ type: 'success', results: data });
+            } catch {
+                if (!signal.aborted) dispatch({ type: 'failure' });
             }
-        }, delay.current);
+        }, request.immediate ? 0 : 250);
         return () => {
             clearTimeout(timer);
             controller.abort();
         };
     }, [request]);
-
-    useLayoutEffect(() => {
-        stopReflow.current = reflowCards(beforeCards.current, cardsList.current, ghostLayer.current);
-        beforeCards.current = null;
-    }, [results.servicios]);
-
-    useEffect(() => () => stopReflow.current(), []);
 
     function categoryChip(category) {
         return html`<label class="chip" key=${category.value}>
@@ -142,7 +105,7 @@ function Catalogo({ initial, categories, orders, api, url }) {
 
     const cards = html`
                 <section aria-label="Servicios disponibles">
-                    <ul class="service-cards" ref=${cardsList}>
+                    <ul class="service-cards" ref=${animation.listRef}>
                         ${results.servicios.map(service => html`<li key=${service.id} data-service-id=${service.id}>
                             <article class="service-card">
                                 <p class="service-card-category">${service.categoria}</p>
@@ -215,7 +178,7 @@ function Catalogo({ initial, categories, orders, api, url }) {
                         : 'Aún no hay servicios disponibles.'}</p>
                     ${!filtered && html`<a href=${`${url}/nuevo`} class="btn-solid theme-primary">Publicar un servicio</a>`}
                 </div>`}
-            <ul class="catalog-ghost-layer" ref=${ghostLayer} aria-hidden="true" inert></ul>
+            <ul class="catalog-ghost-layer" ref=${animation.ghostRef} aria-hidden="true" inert></ul>
             ${(results.pagina > 0 || results.hayMas) && html`
                 <nav aria-label="Páginas del catálogo" class="d-flex gap-4 mt-6">
                     ${results.pagina > 0 && html`<button type="button" class="btn-outline theme-primary btn-sm"

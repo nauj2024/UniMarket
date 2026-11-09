@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { captureCards, reflowCards } from '../../main/resources/static/js/reflow.js';
+import { captureCards, reflowCards } from '../../main/resources/static/js/catalogo/reflow.js';
 
 function fixture() {
     const animations = [];

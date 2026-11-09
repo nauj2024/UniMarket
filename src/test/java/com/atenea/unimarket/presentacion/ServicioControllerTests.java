@@ -230,7 +230,7 @@ class ServicioControllerTests {
         assertThat(inicial.get("categorias").get(4).get("label").asText()).isEqualTo("Tutorías");
         assertThat(inicial.get("ordenes").get(0).get("value").asText()).isEqualTo("ANTIGUOS");
         assertThat(inicial.get("ordenes").get(0).get("label").asText()).isEqualTo("Más antiguos");
-        assertThat(html).contains("catalogo.js", "<noscript>")
+        assertThat(html).contains("/js/catalogo/catalogo.js", "<noscript>")
                 .doesNotContain("id=\"filtros\"", "class=\"service-cards\"");
     }
 
