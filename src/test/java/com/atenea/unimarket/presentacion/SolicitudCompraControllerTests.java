@@ -94,6 +94,21 @@ class SolicitudCompraControllerTests {
     }
 
     @Test
+    void historialRequiereJavaScriptYEntregaLosDatosInicialesSinDuplicarLaListaHtml() throws Exception {
+        solicitudes.crear(betoId, servicioId, null);
+        mvc.perform(get("/notificaciones").with(ana()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("notificacion/lista"))
+                .andExpect(model().attributeExists("bandeja"))
+                .andExpect(model().attributeDoesNotExist("notificaciones", "fecha"))
+                .andExpect(content().string(containsString("<div id=\"notificaciones-historial\"></div>")))
+                .andExpect(content().string(containsString("id=\"notificaciones-iniciales\"")))
+                .andExpect(content().string(containsString("/js/notificaciones/notificaciones.js")))
+                .andExpect(content().string(containsString("Activa JavaScript para consultar tus notificaciones.")))
+                .andExpect(content().string(not(containsString("class=\"service-list\""))));
+    }
+
+    @Test
     void bandejaLimitaElDesplegablePeroConservaElHistorialYElEstado() throws Exception {
         for (int i = 0; i < 4; i++) {
             Integer solicitudId = solicitudes.crear(betoId, servicioId, null).getId();
@@ -165,28 +180,28 @@ class SolicitudCompraControllerTests {
     }
 
     @Test
-    void contrapropuestaYAceptacionAparecenEnNotificacionesConEnlaceALaSolicitud() throws Exception {
+    void contrapropuestaYAceptacionAparecenEnNotificacionesConReferenciaALaSolicitud() throws Exception {
         Integer solicitudId = solicitudes.crear(betoId, servicioId, null).getId();
 
         mvc.perform(post("/solicitudes/" + solicitudId + "/contraproponer").with(ana()).with(csrf())
                         .param("tarifaPorHora", "30000").param("intensidadHoraria", "6"))
                 .andExpect(redirectedUrl("/solicitudes/" + solicitudId))
                 .andExpect(flash().attributeExists("mensaje"));
-        mvc.perform(get("/notificaciones").with(beto()))
+        mvc.perform(get("/api/notificaciones?historial=true").with(beto()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("envió una contrapropuesta")))
                 .andExpect(content().string(containsString("$30.000 COP")))
-                .andExpect(content().string(containsString("/solicitudes/" + solicitudId)));
+                .andExpect(jsonPath("$.notificaciones[0].solicitudId").value(solicitudId));
 
         mvc.perform(post("/solicitudes/" + solicitudId + "/aceptar").with(beto()).with(csrf()))
                 .andExpect(redirectedUrl("/solicitudes/" + solicitudId))
                 .andExpect(flash().attributeExists("mensaje"));
         for (RequestPostProcessor usuario : List.of(ana(), beto())) {
-            mvc.perform(get("/notificaciones").with(usuario))
+            mvc.perform(get("/api/notificaciones?historial=true").with(usuario))
                     .andExpect(status().isOk())
                     .andExpect(content().string(containsString("Acuerdo confirmado")))
                     .andExpect(content().string(containsString("6 horas por semana")))
-                    .andExpect(content().string(containsString("/solicitudes/" + solicitudId)));
+                    .andExpect(jsonPath("$.notificaciones[0].solicitudId").value(solicitudId));
         }
     }
 
@@ -220,10 +235,10 @@ class SolicitudCompraControllerTests {
         assertThat(propuestaRepository.count()).isEqualTo(1);
         assertThat(notificacionRepository.count()).isEqualTo(1);
 
-        mvc.perform(get("/notificaciones").with(ana()))
+        mvc.perform(get("/api/notificaciones?historial=true").with(ana()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Beto")))
-                .andExpect(content().string(containsString("/solicitudes/" + solicitud.getId())));
+                .andExpect(jsonPath("$.notificaciones[0].solicitudId").value(solicitud.getId()));
     }
 
     @Test
@@ -300,7 +315,7 @@ class SolicitudCompraControllerTests {
         assertThat(solicitudRepository.findById(solicitudId).orElseThrow().getEstado())
                 .isEqualTo(EstadoSolicitud.CANCELADA);
         assertThat(servicios.findById(servicioId).orElseThrow().getEstado()).isEqualTo(EstadoServicio.DISPONIBLE);
-        mvc.perform(get("/notificaciones").with(beto()))
+        mvc.perform(get("/api/notificaciones?historial=true").with(beto()))
                 .andExpect(content().string(containsString("rechazó tu solicitud")));
         mvc.perform(get("/solicitudes/" + solicitudId).with(ana()))
                 .andExpect(content().string(not(containsString("Rechazar solicitud"))));
