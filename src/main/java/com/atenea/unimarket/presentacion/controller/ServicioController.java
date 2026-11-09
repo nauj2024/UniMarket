@@ -3,12 +3,12 @@ package com.atenea.unimarket.presentacion.controller;
 import java.text.NumberFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Locale;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -43,8 +44,6 @@ public class ServicioController {
     private static final Locale COLOMBIA = Locale.forLanguageTag("es-CO");
     private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", COLOMBIA);
 
-    private static final int CATEGORIAS_VISIBLES = 10;
-
     private final ServicioService servicios;
     private final UsuarioService usuarios;
 
@@ -60,30 +59,51 @@ public class ServicioController {
     @GetMapping("/servicios")
     public String catalogo(@RequestParam(required = false) String orden,
             @RequestParam(name = "categoria", required = false) List<Integer> categoriaIds,
-            @RequestParam(name = "q", required = false) String texto, Model model) {
-        OrdenServicio seleccionado = OrdenServicio.desde(orden);
-        List<Integer> seleccionadas = categoriaIds == null ? List.of() : categoriaIds;
-        String busqueda = texto == null ? "" : texto.strip();
-        model.addAttribute("servicios", servicios.buscarDisponibles(seleccionadas, busqueda, seleccionado));
-        agregarChipsDeCategorias(model, servicios.categorias(), seleccionadas);
-        model.addAttribute("categoriasSeleccionadas", seleccionadas);
-        model.addAttribute("q", busqueda);
-        model.addAttribute("hayFiltros", !seleccionadas.isEmpty() || !busqueda.isEmpty());
-        model.addAttribute("ordenes", OrdenServicio.values());
-        model.addAttribute("orden", seleccionado);
-        model.addAttribute("formato", new FormatoPesos());
+            @RequestParam(name = "q", required = false) String texto,
+            @RequestParam(defaultValue = "0") int pagina, Model model) {
+        model.addAttribute("catalogoInicial", Map.of(
+                "resultado", buscar(orden, categoriaIds, texto, pagina),
+                "categorias", servicios.categorias().stream()
+                        .map(c -> new OpcionCatalogo(c.getId().toString(), c.getNombre())).toList(),
+                "ordenes", List.of(OrdenServicio.values()).stream()
+                        .map(o -> new OpcionCatalogo(o.name(), o.getEtiqueta())).toList()));
         return "servicio/lista";
     }
 
-    /** Selected categories come first so they are never hidden behind "Ver todas". */
-    private static void agregarChipsDeCategorias(Model model, List<Categoria> categorias, List<Integer> seleccionadas) {
-        List<Categoria> ordenadas = new ArrayList<>(categorias);
-        ordenadas.sort(Comparator.comparing(c -> !seleccionadas.contains(c.getId())));
-        int visibles = Math.max(CATEGORIAS_VISIBLES, (int) ordenadas.stream().filter(c -> seleccionadas.contains(c.getId())).count());
-        visibles = Math.min(visibles, ordenadas.size());
-        model.addAttribute("categoriasVisibles", ordenadas.subList(0, visibles));
-        model.addAttribute("categoriasOcultas", ordenadas.subList(visibles, ordenadas.size()));
+    @GetMapping("/api/servicios")
+    @ResponseBody
+    public ResultadoCatalogo buscar(@RequestParam(required = false) String orden,
+            @RequestParam(name = "categoria", required = false) List<Integer> categoriaIds,
+            @RequestParam(name = "q", required = false) String texto,
+            @RequestParam(defaultValue = "0") int pagina) {
+        String busqueda = validarBusqueda(texto, pagina);
+        return ResultadoCatalogo.desde(servicios.buscarDisponibles(
+                categoriaIds == null ? List.of() : categoriaIds, busqueda, OrdenServicio.desde(orden), pagina));
     }
+
+    private static String validarBusqueda(String texto, int pagina) {
+        if (pagina < 0 || pagina > 100000 || (texto != null && texto.length() > 100)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+        return texto == null ? "" : texto.strip();
+    }
+
+    public record TarjetaServicio(Integer id, String titulo, String categoria, String ofertador,
+            int tarifaPorHora, int intensidadHoraria) {
+        static TarjetaServicio desde(Servicio servicio) {
+            return new TarjetaServicio(servicio.getId(), servicio.getTitulo(), servicio.getCategoria().getNombre(),
+                    servicio.getOfertador().getNombre(), servicio.getTarifaPorHora(), servicio.getIntensidadHoraria());
+        }
+    }
+
+    public record ResultadoCatalogo(List<TarjetaServicio> servicios, long total, int pagina, boolean hayMas) {
+        static ResultadoCatalogo desde(Page<Servicio> pagina) {
+            return new ResultadoCatalogo(pagina.getContent().stream().map(TarjetaServicio::desde).toList(),
+                    pagina.getTotalElements(), pagina.getNumber(), pagina.hasNext());
+        }
+    }
+
+    public record OpcionCatalogo(String value, String label) {}
 
     @GetMapping("/servicios/nuevo")
     public String formulario(Model model) {

@@ -9,6 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import jakarta.persistence.criteria.Join;
 
@@ -121,12 +124,12 @@ public class ServicioService {
         return categorias.findById(id);
     }
     @Transactional(readOnly = true)
-    public List<Servicio> disponibles(OrdenServicio orden) {
-        return servicios.findByEstado(EstadoServicio.DISPONIBLE, orden.getSort());
+    public Page<Servicio> buscarDisponibles(List<Integer> categoriaIds, String texto, OrdenServicio orden, int pagina) {
+        return servicios.findAll(criteriosDisponibles(categoriaIds, texto),
+                PageRequest.of(pagina, 20, orden.getSort().and(Sort.by("id"))));
     }
 
-    @Transactional(readOnly = true)
-    public List<Servicio> buscarDisponibles(List<Integer> categoriaIds, String texto, OrdenServicio orden) {
+    private Specification<Servicio> criteriosDisponibles(List<Integer> categoriaIds, String texto) {
         Specification<Servicio> criterios = (servicio, consulta, cb) ->
                 cb.equal(servicio.get("estado"), EstadoServicio.DISPONIBLE);
         if (categoriaIds != null && !categoriaIds.isEmpty()) {
@@ -146,7 +149,7 @@ public class ServicioService {
                         cb.like(cb.lower(ofertador.<String>get("nombre")), cb.lower(cb.literal(patron)), '\\'));
             });
         }
-        return servicios.findAll(criterios, orden.getSort());
+        return criterios;
     }
 
     /** Los caracteres comodín del usuario se buscan literalmente. */

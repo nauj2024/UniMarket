@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Catálogo | UniMarket</title>
     <link th:replace="~{fragmentos/bootstrap :: styles}">
+    <script type="importmap" th:inline="javascript">
+    {
+      "imports": {
+        "preact": [[@{/js/vendor/preact-11.1.1/preact.mjs}]],
+        "preact/hooks": [[@{/js/vendor/preact-11.1.1/hooks.mjs}]],
+        "htm": [[@{/js/vendor/htm-3.1.1/htm.module.js}]]
+      }
+    }
+    </script>
 </head>
 <body>
 <header th:replace="~{fragmentos/encabezado :: encabezado('catalogo')}"></header>
@@ -18,72 +27,11 @@
         <p th:text="${aviso}">Este servicio ya no está disponible.</p>
         <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Cerrar aviso"></button>
     </div>
-    <form method="get" th:action="@{/servicios}" id="filtros" class="panel catalog-filters">
-        <div class="catalog-search">
-            <label for="q" class="visually-hidden">Buscar</label>
-            <input type="search" id="q" name="q" th:value="${q}" maxlength="100" class="form-control"
-                placeholder="Palabra clave, título o nombre del ofertador">
-            <button type="submit" class="btn-solid theme-primary">Buscar</button>
-        </div>
-        <fieldset class="catalog-chips">
-            <legend class="visually-hidden">Categorías</legend>
-            <label class="chip" th:each="c : ${categoriasVisibles}">
-                <input type="checkbox" name="categoria" th:value="${c.id}"
-                    th:checked="${categoriasSeleccionadas.contains(c.id)}">
-                <span th:text="${c.nombre}">Tutorías</span>
-            </label>
-            <details th:unless="${#lists.isEmpty(categoriasOcultas)}">
-                <summary class="chip chip-more" th:text="|Ver todas (+${#lists.size(categoriasOcultas)})|">Ver todas (+8)</summary>
-                <label class="chip" th:each="c : ${categoriasOcultas}">
-                    <input type="checkbox" name="categoria" th:value="${c.id}">
-                    <span th:text="${c.nombre}">Diseño</span>
-                </label>
-            </details>
-        </fieldset>
-    </form>
-
-    <div class="catalog-results-head">
-        <p class="mb-0">
-            <strong th:text="${#lists.size(servicios) == 1} ? '1 servicio' : |${#lists.size(servicios)} servicios|">12 servicios</strong>
-            <a th:if="${hayFiltros}" th:href="@{/servicios}">Quitar filtros</a>
-        </p>
-        <div class="catalog-sort">
-            <label for="orden">Ordenar por</label>
-            <select id="orden" name="orden" form="filtros" class="form-control form-control-sm w-auto">
-                <option th:each="o : ${ordenes}" th:value="${o.name()}" th:text="${o.etiqueta}"
-                        th:selected="${o == orden}">Más antiguos</option>
-            </select>
-            <button type="submit" form="filtros" class="btn-outline theme-primary btn-sm">Aplicar</button>
-        </div>
-    </div>
-
-    <section th:unless="${#lists.isEmpty(servicios)}" aria-label="Servicios disponibles">
-        <ul class="service-cards">
-            <li th:each="servicio : ${servicios}">
-                <article class="service-card">
-                    <p class="service-card-category" th:text="${servicio.categoria.nombre}">Tutorías</p>
-                    <h2><a th:href="@{/servicios/{id}(id=${servicio.id})}" th:text="${servicio.titulo}">Título</a></h2>
-                    <p class="service-meta">
-                        <span th:text="${servicio.ofertador.nombre}">Nombre</span> ·
-                        <span th:text="${servicio.intensidadHoraria} + ' h por semana'">4 h por semana</span>
-                    </p>
-                    <p class="service-card-rate">
-                        <data th:value="${servicio.tarifaPorHora}" th:text="${formato.pesos(servicio.tarifaPorHora)}">$25.000 COP</data><span>/hora</span>
-                    </p>
-                </article>
-            </li>
-        </ul>
-    </section>
-    <div th:if="${#lists.isEmpty(servicios)}" class="panel">
-        <th:block th:if="${hayFiltros}">
-            <p class="empty-note">No encontramos servicios con esos criterios. Prueba con otras palabras o quita algunos filtros.</p>
-        </th:block>
-        <th:block th:unless="${hayFiltros}">
-            <p class="empty-note">Aún no hay servicios disponibles.</p>
-            <a th:href="@{/servicios/nuevo}" class="btn-solid theme-primary">Publicar un servicio</a>
-        </th:block>
-    </div>
+    <div id="catalogo" th:data-api="@{/api/servicios}" th:data-url="@{/servicios}"></div>
+    <script type="application/json" id="catalogo-inicial" th:inline="javascript">[[${catalogoInicial}]]</script>
+    <noscript><p class="panel">Activa JavaScript para buscar y explorar los servicios.</p></noscript>
 </main>
 <script th:replace="~{fragmentos/bootstrap :: scripts}"></script>
+<script type="module" th:src="@{/js/catalogo.js}"></script>
 </body>
 </html>
