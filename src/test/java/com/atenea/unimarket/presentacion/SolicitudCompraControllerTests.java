@@ -67,6 +67,12 @@ class SolicitudCompraControllerTests {
     @Autowired
     UsuarioRepository usuarios;
 
+    @Autowired
+    com.atenea.unimarket.negocio.NotificacionService bandeja;
+
+    @Autowired
+    org.springframework.transaction.PlatformTransactionManager transactionManager;
+
     Integer anaId;
     Integer betoId;
     Integer servicioId;
@@ -85,6 +91,77 @@ class SolicitudCompraControllerTests {
                 .findFirst().orElseThrow().getId();
         servicioId = catalogo.publicar(anaId, new DatosServicio(tutorias, "Cálculo I",
                 "Tutorías de cálculo diferencial.", 25000, 4, null, null, List.of())).getId();
+    }
+
+    @Test
+    void bandejaLimitaElDesplegablePeroConservaElHistorialYElEstado() throws Exception {
+        for (int i = 0; i < 4; i++) {
+            Integer solicitudId = solicitudes.crear(betoId, servicioId, null).getId();
+            solicitudes.rechazar(solicitudId, anaId);
+        }
+        mvc.perform(get("/api/notificaciones").with(ana()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.notificaciones.length()").value(3))
+                .andExpect(jsonPath("$.sinLeer").value(4))
+                .andExpect(jsonPath("$.notificaciones[0].tipo").value("SOLICITUD_RECIBIDA"));
+        Integer id = bandeja.bandeja(anaId, false).notificaciones().getFirst().id();
+        mvc.perform(post("/api/notificaciones/" + id + "/leer").with(ana()).with(csrf()))
+                .andExpect(status().isNoContent());
+        mvc.perform(post("/api/notificaciones/" + id + "/descartar").with(ana()).with(csrf()))
+                .andExpect(status().isNoContent());
+        assertThat(bandeja.bandeja(anaId, false).sinLeer()).isEqualTo(3);
+        assertThat(bandeja.bandeja(anaId, false).notificaciones()).noneMatch(n -> n.id().equals(id));
+        mvc.perform(get("/api/notificaciones?historial=true").with(ana()))
+                .andExpect(jsonPath("$.notificaciones.length()").value(4))
+                .andExpect(jsonPath("$.notificaciones[0].leida").value(true))
+                .andExpect(jsonPath("$.notificaciones[0].descartada").value(true));
+        mvc.perform(post("/api/notificaciones/" + id + "/descartar?descartada=false").with(ana()).with(csrf()))
+                .andExpect(status().isNoContent());
+        assertThat(bandeja.bandeja(anaId, false).notificaciones().getFirst().id()).isEqualTo(id);
+        assertThat(bandeja.bandeja(anaId, false).sinLeer()).isEqualTo(3);
+    }
+
+    @Test
+    void noPermiteLeerNiDescartarNotificacionesAjenasYExigeCsrf() throws Exception {
+        solicitudes.crear(betoId, servicioId, null);
+        Integer id = bandeja.bandeja(anaId, false).notificaciones().getFirst().id();
+        for (String action : List.of("leer", "descartar")) {
+            mvc.perform(post("/api/notificaciones/" + id + "/" + action).with(beto()).with(csrf()))
+                    .andExpect(status().isNotFound());
+            mvc.perform(post("/api/notificaciones/" + id + "/" + action).with(ana()))
+                    .andExpect(status().isForbidden());
+        }
+        mvc.perform(get("/api/notificaciones").with(beto()))
+                .andExpect(jsonPath("$.notificaciones.length()").value(0))
+                .andExpect(jsonPath("$.sinLeer").value(0));
+        mvc.perform(get("/api/notificaciones/eventos")).andExpect(status().is3xxRedirection());
+        assertThat(bandeja.bandeja(anaId, false).sinLeer()).isEqualTo(1);
+    }
+
+    @Test
+    void emiteSoloAlDestinatarioDespuesDelCommitYNoEmiteAlRevertir() throws Exception {
+        var anaStream = mvc.perform(get("/api/notificaciones/eventos").with(ana()))
+                .andExpect(request().asyncStarted()).andReturn();
+        var betoStream = mvc.perform(get("/api/notificaciones/eventos").with(beto()))
+                .andExpect(request().asyncStarted()).andReturn();
+        try {
+            var transaction = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+            transaction.executeWithoutResult(status -> {
+                solicitudes.crear(betoId, servicioId, null);
+                assertThat(new String(anaStream.getResponse().getContentAsByteArray(), java.nio.charset.StandardCharsets.UTF_8))
+                        .doesNotContain("event:cambio");
+                status.setRollbackOnly();
+            });
+            assertThat(anaStream.getResponse().getContentAsString()).doesNotContain("event:cambio");
+            assertThat(bandeja.bandeja(anaId, true).notificaciones()).isEmpty();
+            solicitudes.crear(betoId, servicioId, null);
+            assertThat(anaStream.getResponse().getContentAsString()).contains("event:cambio");
+            assertThat(betoStream.getResponse().getContentAsString()).doesNotContain("event:cambio");
+            assertThat(bandeja.bandeja(anaId, true).notificaciones()).hasSize(1);
+        } finally {
+            anaStream.getRequest().getAsyncContext().complete();
+            betoStream.getRequest().getAsyncContext().complete();
+        }
     }
 
     @Test
