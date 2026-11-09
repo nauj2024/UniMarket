@@ -14,6 +14,7 @@
         <p>Novedades de tus solicitudes de compra.</p>
     </div>
 
+    <div id="notificaciones-historial">
     <section class="panel" th:unless="${#lists.isEmpty(notificaciones)}" aria-label="Notificaciones">
         <ul class="service-list">
             <li th:each="notificacion : ${notificaciones}">
@@ -21,7 +22,7 @@
                     <h2 th:text="${notificacion.mensaje}">Mensaje</h2>
                     <p class="service-meta">
                         <time th:text="${fecha.texto(notificacion.fechaCreacion)}">3 de noviembre de 2026, 12:00</time>,
-                        <a th:href="@{/solicitudes/{id}(id=${notificacion.solicitud.id})}">Ver solicitud</a>
+                        <a th:href="@{/solicitudes/{id}#historial(id=${notificacion.solicitud.id})}">Ver propuesta</a>
                     </p>
                 </article>
             </li>
@@ -31,6 +32,8 @@
     <section class="panel" th:if="${#lists.isEmpty(notificaciones)}">
         <p class="mb-0">Todavía no tienes notificaciones.</p>
     </section>
+    </div>
+    <script type="application/json" id="notificaciones-iniciales" th:inline="javascript">[[${bandeja}]]</script>
 </main>
 <script th:replace="~{fragmentos/bootstrap :: scripts}"></script>
 </body>
