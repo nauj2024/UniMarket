@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { catalogReducer } from '../../main/resources/static/js/catalogo/catalog-state.js';
+import { catalogReducer } from '../../main/resources/static/js/catalogo/reducer.js';
 
 function fixture() {
     return {
