@@ -2,12 +2,26 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <th:block th:fragment="styles">
+        <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}">
+        <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}">
+        <script type="importmap" th:inline="javascript">
+        {
+          "imports": {
+            "preact": [[@{/js/vendor/preact-11.1.1/preact.mjs}]],
+            "preact/hooks": [[@{/js/vendor/preact-11.1.1/hooks.mjs}]],
+            "htm": [[@{/js/vendor/htm-3.1.1/htm.module.js}]]
+          }
+        }
+        </script>
         <meta name="color-scheme" content="light dark">
         <link rel="stylesheet" th:href="@{/css/vendor/bootstrap-6.0.0-alpha.1/bootstrap.min.css}">
         <link rel="stylesheet" th:href="@{/css/unimarket.css}">
     </th:block>
 </head>
 <body>
-    <script th:fragment="scripts" type="module" th:src="@{/js/vendor/bootstrap-6.0.0-alpha.1/bootstrap.bundle.min.js}"></script>
+    <th:block th:fragment="scripts">
+        <script type="module" th:src="@{/js/vendor/bootstrap-6.0.0-alpha.1/bootstrap.bundle.min.js}"></script>
+        <script type="module" th:src="@{/js/notificaciones.js}"></script>
+    </th:block>
 </body>
 </html>

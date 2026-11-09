@@ -334,3 +334,19 @@ abbr[title="obligatorio"] { color: var(--um-error); text-decoration: none; curso
 }
 .welcome h1 { color: var(--um-on-green); }
 .welcome p { max-width: 36rem; margin: 1rem 0 0; font-size: 1.125rem; }
+
+/* Notification sizing and interaction; Bootstrap supplies layout and type colors. */
+.notification-bell { width: 2.75rem; min-height: 2.75rem; }
+.notification-dot { display: inline-block; width: .4375rem; height: .4375rem; border-radius: 50%; background: var(--unal-green-ink); }
+.notification-bell-dot { position: absolute; top: .5rem; right: .625rem; box-shadow: 0 0 0 2px var(--um-surface); }
+.notification-history { background: var(--um-surface); }
+.notification-panel { z-index: 1050; top: calc(100% + .75rem); right: 0; width: 24.375rem; max-width: calc(100vw - 2rem); background: var(--um-surface); }
+.notification-list { list-style: none; }
+.notification-panel .notification-list { max-height: 24rem; overflow-y: auto; overscroll-behavior: contain; }
+.notification-item:last-child { border-bottom: 0; }
+.notification-item:hover, .notification-item:focus-within { background: var(--unal-green-wash); }
+.notification-type { width: 1.875rem; height: 1.875rem; }
+.notification-type .app-icon { width: 1.125rem; height: 1.125rem; }
+.notification-content { line-height: 1.5; }
+.notification-dismiss { width: 1.75rem; min-height: 1.75rem; }
+.notification-dismiss .app-icon { width: .9375rem; height: .9375rem; }

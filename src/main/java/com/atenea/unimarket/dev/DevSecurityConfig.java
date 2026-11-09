@@ -1,5 +1,7 @@
 package com.atenea.unimarket.dev;
 
+import jakarta.servlet.DispatcherType;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -22,6 +24,7 @@ public class DevSecurityConfig {
     SecurityFilterChain devSecurityFilterChain(HttpSecurity http,
             SecurityContextRepository repository) throws Exception {
         return http.authorizeHttpRequests(authorize -> authorize
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers("/login", "/dev/login", "/error", "/css/**", "/js/**", "/images/**").permitAll()
                         .anyRequest().authenticated())
                 .securityContext(context -> context.securityContextRepository(repository))

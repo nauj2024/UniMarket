@@ -161,7 +161,9 @@ public class SolicitudCompraController {
 
     @GetMapping("/notificaciones")
     public String notificaciones(@AuthenticationPrincipal OidcUser oidc, Model model) {
-        model.addAttribute("notificaciones", notificaciones.deUsuario(usuarioActual(oidc).getId()));
+        Integer usuarioId = usuarioActual(oidc).getId();
+        model.addAttribute("notificaciones", notificaciones.deUsuario(usuarioId));
+        model.addAttribute("bandeja", notificaciones.bandeja(usuarioId, true));
         model.addAttribute("fecha", new FormatoFecha());
         return "notificacion/lista";
     }
