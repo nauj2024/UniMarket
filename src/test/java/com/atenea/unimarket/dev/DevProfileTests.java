@@ -72,11 +72,26 @@ class DevProfileTests {
     }
 
     @Test
+    void navigationKeepsSignedInIdentityWhenViewingAnotherProfile() throws Exception {
+        MockHttpSession session = login("demo-ana");
+        Integer carlosId = usuarios.findByGoogleSub("demo-carlos").orElseThrow().getId();
+        String html = mvc.perform(get("/perfiles/" + carlosId).session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String cuenta = html.substring(html.indexOf("id=\"cuenta-menu\""), html.indexOf("</form>"));
+        assertThat(html).contains(">AR</span>");
+        assertThat(cuenta).contains("Ana Rodríguez", "action=\"/logout\"", "method=\"post\"", "name=\"_csrf\"");
+        assertThat(cuenta).doesNotContain("Carlos Gómez");
+    }
+
+    @Test
     void newIdentityMustCompleteProfileWithoutCreatingAnAccountAtLogin() throws Exception {
         MockHttpSession session = login("dev-nuevo");
         mvc.perform(get("/").session(session)).andExpect(redirectedUrl("/perfil/nuevo"));
         mvc.perform(get("/perfil/nuevo").session(session)).andExpect(status().isOk())
-                .andExpect(content().string(containsString("nuevo.dev@unal.edu.co")));
+                .andExpect(content().string(containsString("nuevo.dev@unal.edu.co")))
+                .andExpect(content().string(not(containsString("aria-label=\"Principal\""))))
+                .andExpect(content().string(containsString("action=\"/logout\"")));
         assertThat(usuarios.existsByGoogleSub("dev-nuevo")).isFalse();
         mvc.perform(post("/dev/login").session(session).with(csrf()).param("subject", "demo-laura"))
                 .andExpect(redirectedUrl("/"));

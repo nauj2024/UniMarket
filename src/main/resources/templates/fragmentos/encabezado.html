@@ -2,25 +2,66 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <body>
 <!-- seccion marks the current nav entry; "registro" hides navigation until the profile exists. -->
-<header th:fragment="encabezado(seccion)" class="app-header">
-    <div class="container app-header-inner">
-        <a th:if="${seccion != 'registro'}" class="app-brand" th:href="@{/}">UniMarket</a>
-        <span th:if="${seccion == 'registro'}" class="app-brand">UniMarket</span>
-        <nav th:if="${seccion != 'registro'}" class="app-nav" aria-label="Principal">
-            <ul>
-                <li><a th:href="@{/servicios}"
-                        th:attr="aria-current=${seccion == 'catalogo'} ? 'page' : null">Catálogo</a></li>
-                <li><a th:href="@{/categorias}"
-                       th:attr="aria-current=${seccion == 'categorias'} ? 'page' : null">Categorías</a></li>
-                <li><a th:href="@{/servicios/nuevo}"
-                       th:attr="aria-current=${seccion == 'publicar'} ? 'page' : null">Publicar servicio</a></li>
-                <li><a th:href="@{/notificaciones}"
-                       th:attr="aria-current=${seccion == 'notificaciones'} ? 'page' : null">Notificaciones</a></li>
-                <li><a th:href="@{/perfil}"
-                       th:attr="aria-current=${seccion == 'perfil'} ? 'page' : null">Mi perfil</a></li>
+<header th:fragment="encabezado(seccion)" class="navbar p-0 border-bottom app-header">
+    <div class="container flex-nowrap gap-4 lg:gap-7 app-header-inner">
+        <a th:if="${seccion != 'registro'}" class="navbar-brand m-0 app-brand" th:href="@{/}">Uni<span>Market</span></a>
+        <span th:if="${seccion == 'registro'}" class="navbar-brand m-0 app-brand">Uni<span>Market</span></span>
+        <nav th:if="${seccion != 'registro'}" class="fixed-bottom app-nav" aria-label="Principal">
+            <ul class="navbar-nav nav-justified flex-row flex-nowrap align-items-center gap-0 lg:gap-7 mx-auto">
+                <li class="nav-item min-w-0"><a class="nav-link align-items-center justify-content-center gap-1 p-0 flex-column lg:flex-row w-100" th:classappend="${seccion == 'catalogo'} ? 'active'" th:href="@{/servicios}"
+                       th:attr="aria-current=${seccion == 'catalogo'} ? 'page' : null">
+                    <span class="app-nav-glyph d-flex lg:d-none align-items-center justify-content-center rounded-pill"><svg th:replace="~{fragmentos/iconos :: icono('buscar')}"></svg></span>
+                    <span>Catálogo</span>
+                </a></li>
+                <li class="nav-item min-w-0"><a class="nav-link align-items-center justify-content-center gap-1 p-0 flex-column lg:flex-row w-100" th:classappend="${seccion == 'categorias'} ? 'active'" th:href="@{/categorias}"
+                       th:attr="aria-current=${seccion == 'categorias'} ? 'page' : null">
+                    <span class="app-nav-glyph d-flex lg:d-none align-items-center justify-content-center rounded-pill"><svg th:replace="~{fragmentos/iconos :: icono('categorias')}"></svg></span>
+                    <span>Categorías</span>
+                </a></li>
+                <li class="nav-item min-w-0 lg:ms-auto app-nav-publish"><a class="nav-link align-items-center justify-content-center gap-1 p-0 flex-column w-100 lg:d-none" th:classappend="${seccion == 'publicar'} ? 'active'" th:href="@{/servicios/nuevo}"
+                       th:attr="aria-current=${seccion == 'publicar'} ? 'page' : null">
+                    <span class="app-nav-glyph d-flex align-items-center justify-content-center rounded-pill"><svg th:replace="~{fragmentos/iconos :: icono('publicar')}"></svg></span>
+                    <span>Publicar</span>
+                </a>
+                    <a class="btn-solid theme-primary py-4 d-none lg:d-inline-flex" th:href="@{/servicios/nuevo}"
+                       th:attr="aria-current=${seccion == 'publicar'} ? 'page' : null">
+                        <svg th:replace="~{fragmentos/iconos :: icono('publicar')}"></svg>Publicar servicio
+                    </a>
+                </li>
+                <li class="nav-item min-w-0 app-nav-notifications"><a class="nav-link align-items-center justify-content-center gap-1 p-0 flex-column lg:flex-row w-100" th:classappend="${seccion == 'notificaciones'} ? 'active'" th:href="@{/notificaciones}" title="Notificaciones"
+                       th:attr="aria-current=${seccion == 'notificaciones'} ? 'page' : null">
+                    <span class="app-nav-glyph d-flex align-items-center justify-content-center rounded-pill"><svg th:replace="~{fragmentos/iconos :: icono('notificaciones')}"></svg></span>
+                    <span class="lg:d-none">Notificaciones</span><span class="visually-hidden d-none lg:d-inline">Notificaciones</span>
+                </a></li>
+                <li class="nav-item min-w-0 lg:d-none"><a class="nav-link align-items-center justify-content-center gap-1 p-0 flex-column w-100" th:classappend="${seccion == 'perfil'} ? 'active'" th:href="@{/perfil}"
+                       th:attr="aria-current=${seccion == 'perfil'} ? 'page' : null">
+                    <span class="app-nav-glyph d-flex align-items-center justify-content-center rounded-pill"><svg th:replace="~{fragmentos/iconos :: icono('perfil')}"></svg></span>
+                    <span>Mi perfil</span>
+                </a></li>
             </ul>
         </nav>
-        <form th:action="@{/logout}" method="post" class="app-logout">
+        <div th:if="${seccion != 'registro'}" class="position-relative flex-shrink-0 app-account">
+            <button type="button" class="btn-text p-1 gap-1" data-bs-toggle="menu" data-bs-placement="bottom-end" data-bs-offset="0,12"
+                    aria-expanded="false" aria-controls="cuenta-menu" aria-label="Mi cuenta">
+                <span class="app-avatar d-flex align-items-center justify-content-center rounded-circle border bg-subtle-primary fw-semibold fs-xs"
+                      aria-hidden="true" th:text="${cuentaNavegacion.iniciales}">U</span>
+                <svg class="app-icon d-none lg:d-block" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"/></svg>
+            </button>
+            <div class="menu" id="cuenta-menu">
+                <div class="menu-header text-wrap text-break py-4">
+                    <strong class="d-block fg-body" th:text="${cuentaNavegacion.nombre}">Mi cuenta</strong>
+                    <small class="d-block" th:text="${cuentaNavegacion.correo}"></small>
+                </div>
+                <hr class="menu-divider">
+                <a class="menu-item" th:href="@{/perfil}" th:attr="aria-current=${seccion == 'perfil'} ? 'page' : null">
+                    <svg th:replace="~{fragmentos/iconos :: icono('perfil')}"></svg>Mi perfil
+                </a>
+                <form th:action="@{/logout}" method="post" class="m-0">
+                    <button type="submit" class="menu-item">Cerrar sesión</button>
+                </form>
+            </div>
+        </div>
+        <form th:if="${seccion == 'registro'}" th:action="@{/logout}" method="post" class="ms-auto">
             <button type="submit" class="btn-text theme-secondary btn-sm">Cerrar sesión</button>
         </form>
     </div>
