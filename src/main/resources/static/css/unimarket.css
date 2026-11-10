@@ -337,7 +337,7 @@ abbr[title="obligatorio"] { color: var(--um-error); text-decoration: none; curso
 
 /* Notification sizing and interaction; Bootstrap supplies layout and type colors. */
 .notification-bell { width: 2.75rem; min-height: 2.75rem; }
-.notification-dot { display: inline-block; width: .4375rem; height: .4375rem; border-radius: 50%; background: var(--unal-green-ink); }
+.notification-dot { width: .4375rem; height: .4375rem; border-radius: 50%; background: var(--unal-green-ink); }
 .notification-bell-dot { position: absolute; top: .5rem; right: .625rem; box-shadow: 0 0 0 2px var(--um-surface); }
 .notification-history { background: var(--um-surface); }
 .notification-panel { z-index: 1050; top: calc(100% + .75rem); right: 0; width: 24.375rem; max-width: calc(100vw - 2rem); background: var(--um-surface); }
