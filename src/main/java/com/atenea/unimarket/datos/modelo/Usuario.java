@@ -29,6 +29,10 @@ public class Usuario {
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private Instant fechaCreacion;
 
+    /** Null for accounts created before the data policy existed. */
+    @Column(name = "fecha_aceptacion_politica")
+    private Instant fechaAceptacionPolitica;
+
     protected Usuario() {
     }
 
@@ -57,5 +61,13 @@ public class Usuario {
 
     public Instant getFechaCreacion() {
         return fechaCreacion;
+    }
+
+    public Instant getFechaAceptacionPolitica() {
+        return fechaAceptacionPolitica;
+    }
+
+    public void aceptarPoliticaDatos(Instant fecha) {
+        this.fechaAceptacionPolitica = fecha;
     }
 }

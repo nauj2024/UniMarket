@@ -20,6 +20,8 @@
                        th:attr="aria-current=${seccion == 'perfil'} ? 'page' : null">Mi perfil</a></li>
             </ul>
         </nav>
+        <a class="app-header-link" th:href="@{/politica-datos}"
+           th:attr="aria-current=${seccion == 'politica'} ? 'page' : null">Política de datos</a>
         <form th:action="@{/logout}" method="post" class="app-logout">
             <button type="submit" class="btn-text theme-secondary btn-sm">Cerrar sesión</button>
         </form>

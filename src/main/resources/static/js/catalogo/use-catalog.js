@@ -2,19 +2,20 @@ import { useEffect, useLayoutEffect, useReducer, useRef } from 'preact/hooks';
 import { catalogReducer, sameCards } from './reducer.js';
 import { useCardReflow } from './animation/use-card-reflow.js';
 
-export function useCatalog({ initial, orders, api, url }) {
+export function useCatalog({ initial, initialFilters, orders, api, url }) {
     const readLocation = () => {
         const params = new URLSearchParams(location.search);
         const order = params.get('orden');
         return {
             q: params.get('q') || '',
-            categories: params.getAll('categoria'),
+            categories: params.getAll('categoria').flatMap(value => value.split(','))
+                .map(value => String(Number(value))),
             order: orders.some(item => item.value === order) ? order : orders[0].value,
             page: Math.max(0, Number(params.get('pagina')) || 0),
         };
     };
     const [state, dispatch] = useReducer(catalogReducer, null, () => ({
-        filters: readLocation(),
+        filters: initialFilters,
         results: initial,
         request: null,
         busy: false,

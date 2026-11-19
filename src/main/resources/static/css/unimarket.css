@@ -70,6 +70,12 @@ a.app-brand:hover { color: var(--unal-green-ink); }
 .app-nav a:hover { background: var(--um-canvas); color: var(--um-ink); }
 .app-nav a[aria-current="page"] { background: var(--unal-green-wash); color: var(--unal-green-deep); }
 .app-logout { margin-inline-start: auto; }
+.app-header-link { margin-inline-start: auto; color: var(--unal-gray); font-size: .875rem; }
+.app-header-link + .app-logout { margin-inline-start: 0; }
+.form-check-field { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; }
+.form-check-field .field-error { flex-basis: 100%; }
+.politica section { margin-bottom: 1.75rem; }
+.politica h2 { margin-bottom: .5rem; }
 
 @media (width < 768px) {
     .app-nav { order: 3; flex-basis: 100%; }

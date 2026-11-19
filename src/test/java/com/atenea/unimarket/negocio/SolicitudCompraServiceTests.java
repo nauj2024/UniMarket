@@ -114,7 +114,7 @@ class SolicitudCompraServiceTests {
         }
         Integer aceptanteId = aceptaCliente ? betoId : anaId;
 
-        solicitudes.aceptar(solicitudId, aceptanteId);
+        solicitudes.aceptar(solicitudId, aceptanteId, vigente(solicitudId));
 
         for (Integer destinatarioId : List.of(anaId, betoId)) {
             List<Notificacion> acuerdos = notificaciones.deUsuario(destinatarioId).stream()
@@ -129,7 +129,7 @@ class SolicitudCompraServiceTests {
         assertThat(servicios.findById(servicioId).orElseThrow().getEstado()).isEqualTo(EstadoServicio.ACTIVO);
 
         long cantidad = notificacionRepository.count();
-        assertThatThrownBy(() -> solicitudes.aceptar(solicitudId, aceptanteId))
+        assertThatThrownBy(() -> solicitudes.aceptar(solicitudId, aceptanteId, vigente(solicitudId)))
                 .isInstanceOf(SolicitudNoPermitidaException.class);
         assertThat(notificacionRepository.count()).isEqualTo(cantidad);
     }
@@ -140,7 +140,7 @@ class SolicitudCompraServiceTests {
 
         assertThatThrownBy(() -> solicitudes.contraproponer(solicitudId, betoId, 30000, null))
                 .isInstanceOf(SolicitudNoPermitidaException.class);
-        assertThatThrownBy(() -> solicitudes.aceptar(solicitudId, betoId))
+        assertThatThrownBy(() -> solicitudes.aceptar(solicitudId, betoId, vigente(solicitudId)))
                 .isInstanceOf(SolicitudNoPermitidaException.class);
         assertThatThrownBy(() -> solicitudes.contraproponer(solicitudId, anaId, 0, 6))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -288,5 +288,35 @@ class SolicitudCompraServiceTests {
     void rechazarUnaSolicitudInexistenteFalla() {
         assertThatThrownBy(() -> solicitudes.rechazar(99999, anaId))
                 .isInstanceOf(SolicitudNoEncontradaException.class);
+    }
+    private Integer vigente(Integer solicitudId) {
+        return propuestaRepository.findFirstBySolicitudIdOrderByNumeroRondaDesc(solicitudId).orElseThrow().getId();
+    }
+
+    @Test
+    void tercerosNoPuedenAlterarNiAceptarUnaNegociacion() {
+        Integer tercero = perfiles.registrar("sub-tercero", "tercero@unal.edu.co", "Tercero", "3201112233", List.of()).getUsuario().getId();
+        Integer id = solicitudes.crear(betoId, servicioId, null).getId();
+        assertThatThrownBy(() -> solicitudes.contraproponer(id, tercero, 1, 168))
+                .isInstanceOf(SolicitudNoPermitidaException.class);
+        assertThatThrownBy(() -> solicitudes.aceptar(id, tercero, vigente(id)))
+                .isInstanceOf(SolicitudNoPermitidaException.class);
+        assertThat(propuestaRepository.findBySolicitudIdOrderByNumeroRondaAsc(id)).hasSize(1);
+        assertThat(notificacionRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    void noAceptaUnaPropuestaDistintaDeLaMostrada() {
+        Integer id = solicitudes.crear(betoId, servicioId, null).getId();
+        solicitudes.contraproponer(id, anaId, 30000, 6);
+        Integer mostrada = vigente(id);
+        solicitudes.contraproponer(id, betoId, 26000, null);
+        solicitudes.contraproponer(id, anaId, 90000, 100);
+        long avisos = notificacionRepository.count();
+        assertThatThrownBy(() -> solicitudes.aceptar(id, betoId, mostrada))
+                .isInstanceOf(SolicitudNoPermitidaException.class).hasMessageContaining("cambió");
+        assertThat(solicitudRepository.findById(id).orElseThrow().getEstado()).isEqualTo(EstadoSolicitud.NEGOCIANDO);
+        assertThat(servicios.findById(servicioId).orElseThrow().getEstado()).isEqualTo(EstadoServicio.DISPONIBLE);
+        assertThat(notificacionRepository.count()).isEqualTo(avisos);
     }
 }

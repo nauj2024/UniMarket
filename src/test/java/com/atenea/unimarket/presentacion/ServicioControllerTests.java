@@ -53,6 +53,9 @@ class ServicioControllerTests {
     @Autowired
     UsuarioRepository usuarios;
 
+    @Autowired
+    org.springframework.jdbc.core.JdbcTemplate jdbc;
+
     Integer anaId;
     Integer tutoriasId;
 
@@ -396,6 +399,97 @@ class ServicioControllerTests {
         assertThat(script).isGreaterThanOrEqualTo(0);
         int inicio = html.indexOf('>', script) + 1;
         return new JsonMapper().readTree(html.substring(inicio, html.indexOf("</script>", inicio)));
+    }
+
+    @Test
+    void elCatalogoSoloListaServiciosDisponibles() throws Exception {
+        publicarCon("Clases de piano", tutoriasId, 20000);
+        marcar(publicarCon("Clases de violin", tutoriasId, 20000), "ACTIVO");
+
+        assertThat(titulosCatalogo("/servicios")).containsExactly("Clases de piano");
+    }
+
+    @Test
+    void elCatalogoOrdenaPorFechaAscendenteSalvoQueSePidaOtroOrden() throws Exception {
+        publicarCon("Alfa uno", tutoriasId, 30000);
+        publicarCon("Beta dos", tutoriasId, 10000);
+
+        for (String url : List.of("/servicios", "/servicios?orden=no-existe", "/servicios?orden=ANTIGUOS")) {
+            assertThat(titulosCatalogo(url)).containsExactly("Alfa uno", "Beta dos");
+        }
+        assertThat(titulosCatalogo("/servicios?orden=RECIENTES")).containsExactly("Beta dos", "Alfa uno");
+        assertThat(titulosCatalogo("/servicios?orden=TARIFA_ASC")).containsExactly("Beta dos", "Alfa uno");
+    }
+
+    @Test
+    void laBusquedaFiltraPorTextoYPorCategorias() throws Exception {
+        Integer disenoId = categoriaId("Dise");
+        publicarCon("Poster academico", disenoId, 40000);
+        publicarCon("Calculo basico", tutoriasId, 30000);
+
+        assertThat(titulosCatalogo("/servicios?q=POSTER")).containsExactly("Poster academico");
+        assertThat(titulosCatalogo("/servicios?categoria=" + tutoriasId)).containsExactly("Calculo basico");
+        assertThat(titulosCatalogo("/servicios?categoria=" + tutoriasId + "&categoria=" + disenoId))
+                .containsExactlyInAnyOrder("Calculo basico", "Poster academico");
+    }
+
+    @Test
+    void elFormularioConservaLosCriteriosDeBusqueda() throws Exception {
+        Integer disenoId = categoriaId("Dise");
+        String html = mvc.perform(get("/servicios").with(ana())
+                        .param("q", "calculo").param("categoria", tutoriasId + "," + disenoId))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        JsonNode filtros = datosIniciales(html).get("filtros");
+        assertThat(filtros.get("q").asText()).isEqualTo("calculo");
+        assertThat(filtros.get("categories").valueStream().map(JsonNode::asText).toList())
+                .containsExactly(tutoriasId.toString(), disenoId.toString());
+        assertThat(filtros.get("order").asText()).isEqualTo("ANTIGUOS");
+    }
+
+    @Test
+    void elCatalogoEntregaResultadosVaciosConYSinCriterios() throws Exception {
+        assertThat(titulosCatalogo("/servicios")).isEmpty();
+
+        publicarCon("Calculo basico", tutoriasId, 30000);
+        assertThat(titulosCatalogo("/servicios?q=inexistente")).isEmpty();
+    }
+
+    @Test
+    void elDetalleDeUnServicioNoDisponibleRedirigeAlCatalogoConAviso() throws Exception {
+        Integer id = publicarDeAna();
+        perfiles.registrar("sub-beto", "beto@unal.edu.co", "Beto", "3109876543", List.of());
+
+        mvc.perform(get("/servicios/" + id).with(como("sub-beto"))).andExpect(status().isOk());
+
+        marcar(id, "ACTIVO");
+
+        mvc.perform(get("/servicios/" + id).with(como("sub-beto")))
+                .andExpect(redirectedUrl("/servicios"))
+                .andExpect(flash().attributeExists("aviso"));
+        mvc.perform(get("/servicios/" + id).with(ana())).andExpect(status().isOk());
+    }
+
+    private Integer publicarCon(String titulo, Integer categoriaId, int tarifa) {
+        return catalogo.publicar(anaId, new DatosServicio(categoriaId, titulo, "Descripcion general", tarifa, 4,
+                null, null, List.of())).getId();
+    }
+
+    private Integer categoriaId(String prefijo) {
+        return catalogo.categorias().stream().filter(c -> c.getNombre().startsWith(prefijo))
+                .findFirst().orElseThrow().getId();
+    }
+
+    private void marcar(Integer servicioId, String estado) {
+        jdbc.update("UPDATE servicio SET estado = ? WHERE id = ?", estado, servicioId);
+    }
+
+    private List<String> titulosCatalogo(String url) throws Exception {
+        String html = mvc.perform(get(url).with(ana())).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        return datosIniciales(html).get("resultado").get("servicios").valueStream()
+                .map(servicio -> servicio.get("titulo").asText())
+                .toList();
     }
 
     private Integer publicarDeAna() {

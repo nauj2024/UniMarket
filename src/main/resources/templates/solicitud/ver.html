@@ -82,6 +82,7 @@
             
             <!-- 1. Botón Aceptar -->
             <form th:action="@{/solicitudes/{id}/aceptar(id=${solicitud.id})}" method="post" class="mb-6">
+                <input type="hidden" name="propuestaId" th:value="${propuestaVigenteId}">
                 <p class="text-muted">Si estás de acuerdo con la tarifa y la intensidad horaria vigentes, puedes cerrar el acuerdo:</p>
                 <button type="submit" class="btn btn-success fw-bold">
                     ✓ Aceptar propuesta vigente

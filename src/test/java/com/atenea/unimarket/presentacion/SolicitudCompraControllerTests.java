@@ -101,7 +101,8 @@ class SolicitudCompraControllerTests {
                 .andExpect(content().string(containsString("$30.000 COP")))
                 .andExpect(content().string(containsString("/solicitudes/" + solicitudId)));
 
-        mvc.perform(post("/solicitudes/" + solicitudId + "/aceptar").with(beto()).with(csrf()))
+        mvc.perform(post("/solicitudes/" + solicitudId + "/aceptar").with(beto()).with(csrf())
+                .param("propuestaId", propuestaRepository.findFirstBySolicitudIdOrderByNumeroRondaDesc(solicitudId).orElseThrow().getId().toString()))
                 .andExpect(redirectedUrl("/solicitudes/" + solicitudId))
                 .andExpect(flash().attributeExists("mensaje"));
         for (RequestPostProcessor usuario : List.of(ana(), beto())) {
@@ -245,6 +246,36 @@ class SolicitudCompraControllerTests {
     void sinPerfilNoPuedeSolicitar() throws Exception {
         mvc.perform(get("/servicios/" + servicioId + "/solicitar").with(como("sub-nuevo")))
                 .andExpect(redirectedUrl("/perfil/nuevo"));
+    }
+
+    @Test
+    void unTerceroNoPuedeContraproponerNiAceptarPorPostDirecto() throws Exception {
+        perfiles.registrar("sub-tercero", "tercero@unal.edu.co", "Tercero", "3201112233", List.of());
+        Integer id = solicitudes.crear(betoId, servicioId, null).getId();
+        String vigente = propuestaRepository.findFirstBySolicitudIdOrderByNumeroRondaDesc(id).orElseThrow().getId().toString();
+        mvc.perform(post("/solicitudes/" + id + "/contraproponer").with(como("sub-tercero")).with(csrf())
+                        .param("tarifaPorHora", "1").param("intensidadHoraria", "168"))
+                .andExpect(flash().attributeExists("aviso"));
+        mvc.perform(post("/solicitudes/" + id + "/aceptar").with(como("sub-tercero")).with(csrf())
+                        .param("propuestaId", vigente))
+                .andExpect(flash().attributeExists("aviso"));
+        assertThat(solicitudes.propuestasDe(id)).hasSize(1);
+        assertThat(solicitudRepository.findById(id).orElseThrow().getEstado()).isEqualTo(EstadoSolicitud.NEGOCIANDO);
+    }
+
+    @Test
+    void aceptarRequiereLaPropuestaMostradaYRechazaUnFormularioViejo() throws Exception {
+        Integer id = solicitudes.crear(betoId, servicioId, null).getId();
+        solicitudes.contraproponer(id, anaId, 30000, 6);
+        String vieja = propuestaRepository.findFirstBySolicitudIdOrderByNumeroRondaDesc(id).orElseThrow().getId().toString();
+        mvc.perform(get("/solicitudes/" + id).with(beto())).andExpect(content().string(containsString("name=\"propuestaId\"")));
+        solicitudes.contraproponer(id, betoId, 26000, null);
+        solicitudes.contraproponer(id, anaId, 90000, 100);
+        mvc.perform(post("/solicitudes/" + id + "/aceptar").with(beto()).with(csrf()).param("propuestaId", vieja))
+                .andExpect(flash().attributeExists("aviso"));
+        mvc.perform(post("/solicitudes/" + id + "/aceptar").with(beto()).with(csrf()))
+                .andExpect(status().isBadRequest());
+        assertThat(solicitudRepository.findById(id).orElseThrow().getEstado()).isEqualTo(EstadoSolicitud.NEGOCIANDO);
     }
 
     private RequestPostProcessor ana() {

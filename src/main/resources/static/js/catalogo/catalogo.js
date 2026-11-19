@@ -7,8 +7,8 @@ import { CatalogResults } from './components/results.js';
 
 const html = htm.bind(h);
 
-function Catalogo({ initial, categories, orders, api, url }) {
-    const { state, update, reset, animation } = useCatalog({ initial, orders, api, url });
+function Catalogo({ initial, initialFilters, categories, orders, api, url }) {
+    const { state, update, reset, animation } = useCatalog({ initial, initialFilters, orders, api, url });
     const { filters, results, busy, error } = state;
     const filtered = filters.q.trim() !== '' || filters.categories.length > 0;
 
@@ -28,8 +28,8 @@ function Catalogo({ initial, categories, orders, api, url }) {
 
 const root = document.getElementById('catalogo');
 if (root) {
-    const { resultado: initial, categorias: categories, ordenes: orders } =
+    const { resultado: initial, filtros: initialFilters, categorias: categories, ordenes: orders } =
         JSON.parse(document.getElementById('catalogo-inicial').textContent);
     const { api, url } = root.dataset;
-    render(html`<${Catalogo} initial=${initial} categories=${categories} orders=${orders} api=${api} url=${url} />`, root);
+    render(html`<${Catalogo} initial=${initial} initialFilters=${initialFilters} categories=${categories} orders=${orders} api=${api} url=${url} />`, root);
 }

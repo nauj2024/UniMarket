@@ -90,4 +90,10 @@ class GoogleLoginTests {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login?logout"));
     }
+
+    @Test
+    void usuarioSinPerfilPuedeCargarJavascript() throws Exception {
+        mvc.perform(get("/js/vendor/bootstrap-6.0.0-alpha.1/bootstrap.bundle.min.js").with(oidcLogin()))
+                .andExpect(status().isOk());
+    }
 }

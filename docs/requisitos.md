@@ -71,7 +71,9 @@ El formulario muestra el correo institucional de Google sin permitir editarlo y 
 
 Si el usuario cambia disponibilidad con un servicio activo cuyo horario ya fue acordado, advertir antes de actualizar. Aplicar el cambio a futuras negociaciones y conservar los horarios ya pactados.
 
-Los horarios de disponibilidad son franjas semanales de día, hora de inicio y hora de fin; su formato de almacenamiento está en [persistencia](diseno.md#persistencia). El teléfono de contacto es obligatorio y debe ser un celular colombiano de 10 dígitos que empiece por 3, con prefijo `+57` opcional; se guarda sin prefijo. Los horarios son opcionales. Falta definir cuáles de los campos académicos y de servicios serán obligatorios.
+Los horarios de disponibilidad son franjas semanales de día, hora de inicio y hora de fin; su formato de almacenamiento está en [persistencia](diseno.md#persistencia). El teléfono de contacto es obligatorio y debe ser un celular colombiano de 10 dígitos que empiece por 3, con prefijo `+57` opcional; se guarda sin prefijo. Los horarios son opcionales. Falta definir cuáles de los campos académicos y de servicios serán obligatorios. El teléfono solo lo ve el dueño del perfil; los demás usuarios contactan al ofertador por el chat de UniMarket.
+
+Para crear la cuenta hay que marcar una casilla obligatoria que acepta la política de tratamiento de datos personales (Ley 1581 de 2012); se guarda la fecha de aceptación. La política se publica en `/politica-datos`, enlazada desde el formulario y desde el encabezado, y se puede leer antes de tener perfil. Las cuentas creadas antes de esta regla quedan sin fecha de aceptación y no se les pide aceptarla. Historia: `DATOS-USR-H01`.
 
 Historias: `PERFIL-USR-H01` completar por primera vez; `PERFIL-USR-H02` mantener actualizado.
 

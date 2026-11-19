@@ -63,6 +63,9 @@ public class ServicioController {
             @RequestParam(defaultValue = "0") int pagina, Model model) {
         model.addAttribute("catalogoInicial", Map.of(
                 "resultado", buscar(orden, categoriaIds, texto, pagina),
+                "filtros", new FiltrosCatalogo(texto == null ? "" : texto,
+                        categoriaIds == null ? List.of() : categoriaIds.stream().map(String::valueOf).toList(),
+                        OrdenServicio.desde(orden).name(), pagina),
                 "categorias", servicios.categorias().stream()
                         .map(c -> new OpcionCatalogo(c.getId().toString(), c.getNombre())).toList(),
                 "ordenes", List.of(OrdenServicio.values()).stream()
@@ -102,6 +105,8 @@ public class ServicioController {
                     pagina.getTotalElements(), pagina.getNumber(), pagina.hasNext());
         }
     }
+
+    public record FiltrosCatalogo(String q, List<String> categories, String order, int page) {}
 
     public record OpcionCatalogo(String value, String label) {}
 
