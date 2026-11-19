@@ -28,11 +28,19 @@
                         <svg th:replace="~{fragmentos/iconos :: icono('publicar')}"></svg>Publicar servicio
                     </a>
                 </li>
-                <li class="nav-item min-w-0 app-nav-notifications"><a class="nav-link align-items-center justify-content-center gap-1 p-0 flex-column lg:flex-row w-100" th:classappend="${seccion == 'notificaciones'} ? 'active'" th:href="@{/notificaciones}" title="Notificaciones"
+                <li class="nav-item min-w-0 app-nav-notifications position-relative">
+                    <a id="notificaciones-movil" class="nav-link align-items-center justify-content-center gap-1 p-0 flex-column w-100 lg:d-none" th:classappend="${seccion == 'notificaciones'} ? 'active'" th:href="@{/notificaciones}"
                        th:attr="aria-current=${seccion == 'notificaciones'} ? 'page' : null">
-                    <span class="app-nav-glyph d-flex align-items-center justify-content-center rounded-pill"><svg th:replace="~{fragmentos/iconos :: icono('notificaciones')}"></svg></span>
-                    <span class="lg:d-none">Notificaciones</span><span class="visually-hidden d-none lg:d-inline">Notificaciones</span>
-                </a></li>
+                        <span class="app-nav-glyph position-relative d-flex align-items-center justify-content-center rounded-pill">
+                            <svg th:replace="~{fragmentos/iconos :: icono('notificaciones')}"></svg>
+                            <span class="notification-dot notification-bell-dot d-none" data-notification-dot aria-hidden="true"></span>
+                        </span>
+                        <span>Notificaciones</span>
+                    </a>
+                    <div id="notificaciones-desktop" class="d-none lg:d-block"
+                         th:data-api="@{/api/notificaciones}" th:data-eventos="@{/api/notificaciones/eventos}"
+                         th:data-historial="@{/notificaciones}" th:data-solicitudes="@{/solicitudes}"></div>
+                </li>
                 <li class="nav-item min-w-0 lg:d-none"><a class="nav-link align-items-center justify-content-center gap-1 p-0 flex-column w-100" th:classappend="${seccion == 'perfil'} ? 'active'" th:href="@{/perfil}"
                        th:attr="aria-current=${seccion == 'perfil'} ? 'page' : null">
                     <span class="app-nav-glyph d-flex align-items-center justify-content-center rounded-pill"><svg th:replace="~{fragmentos/iconos :: icono('perfil')}"></svg></span>

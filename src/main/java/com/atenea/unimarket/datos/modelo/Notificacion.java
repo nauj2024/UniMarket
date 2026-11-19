@@ -40,6 +40,20 @@ public class Notificacion {
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private Instant fechaCreacion;
 
+    @Column(nullable = false)
+    private boolean leida;
+
+    @Column(nullable = false)
+    private boolean descartada;
+
+    public boolean isLeida() {
+        return leida;
+    }
+
+    public boolean isDescartada() {
+        return descartada;
+    }
+
     protected Notificacion() {
     }
 

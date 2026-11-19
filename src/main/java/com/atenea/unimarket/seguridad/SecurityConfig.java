@@ -1,6 +1,8 @@
 package com.atenea.unimarket.seguridad;
 
 import org.springframework.beans.factory.ObjectProvider;
+import jakarta.servlet.DispatcherType;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -24,6 +26,7 @@ public class SecurityConfig {
             ObjectProvider<ClientRegistrationRepository> registrations,
             UnalOidcUserService unalUsers) throws Exception {
         http.authorizeHttpRequests(authorize -> authorize
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers("/login", "/error", "/css/**", "/js/**", "/images/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions
