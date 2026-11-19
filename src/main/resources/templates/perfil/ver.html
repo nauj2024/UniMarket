@@ -55,7 +55,7 @@
                             <dd><a th:href="|mailto:${perfil.usuario.correoInstitucional}|"
                                    th:text="${perfil.usuario.correoInstitucional}">correo@unal.edu.co</a></dd>
                         </div>
-                        <div>
+                        <div th:if="${propio}">
                             <dt>Teléfono</dt>
                             <dd><a th:href="|tel:+57${perfil.telefonoContacto}|"
                                    th:text="${perfil.telefonoContacto}">3001234567</a></dd>

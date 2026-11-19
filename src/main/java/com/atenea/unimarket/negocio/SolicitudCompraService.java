@@ -80,6 +80,7 @@ public class SolicitudCompraService {
         SolicitudCompra solicitud = solicitudes.findById(solicitudId)
             .orElseThrow(SolicitudNoEncontradaException::new);
 
+        exigirParticipante(solicitud, usuarioId);
         if (solicitud.getEstado() != EstadoSolicitud.NEGOCIANDO) {
             throw new SolicitudNoPermitidaException("La solicitud no se encuentra en negociación.");
         }
@@ -131,10 +132,11 @@ public class SolicitudCompraService {
 
     /** La contraparte acepta la propuesta vigente: la solicitud y el servicio pasan a estar ACTIVA/ACTIVO. */
     @Transactional
-    public SolicitudCompra aceptar(Integer solicitudId, Integer usuarioId) {
+    public SolicitudCompra aceptar(Integer solicitudId, Integer usuarioId, Integer propuestaId) {
         SolicitudCompra solicitud = solicitudes.findById(solicitudId)
                 .orElseThrow(SolicitudNoEncontradaException::new);
 
+        exigirParticipante(solicitud, usuarioId);
         if (solicitud.getEstado() != EstadoSolicitud.NEGOCIANDO) {
             throw new SolicitudNoPermitidaException("La solicitud no se encuentra en negociación.");
         }
@@ -147,6 +149,9 @@ public class SolicitudCompraService {
             throw new SolicitudNoPermitidaException("No puedes aceptar tu propia propuesta.");
         }
 
+        if (!ultimaPropuesta.getId().equals(propuestaId)) {
+            throw new SolicitudNoPermitidaException("La propuesta cambió. Revisa las condiciones actuales antes de aceptar.");
+        }
         Instant ahora = Instant.now(reloj);
 
         // Cambiar la solicitud a activa
@@ -197,6 +202,13 @@ public class SolicitudCompraService {
     @Transactional(readOnly = true)
     public List<Propuesta> propuestasDe(Integer solicitudId) {
         return propuestas.findBySolicitudIdOrderByNumeroRondaAsc(solicitudId);
+    }
+
+    private static void exigirParticipante(SolicitudCompra solicitud, Integer usuarioId) {
+        if (!solicitud.getCliente().getId().equals(usuarioId)
+                && !solicitud.getServicio().getOfertador().getId().equals(usuarioId)) {
+            throw new SolicitudNoPermitidaException("Solo las partes de la solicitud pueden modificarla.");
+        }
     }
 
     private static String pesos(int valor) {

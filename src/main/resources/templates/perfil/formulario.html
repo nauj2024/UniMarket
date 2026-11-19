@@ -66,6 +66,21 @@
 
             <fieldset th:replace="~{fragmentos/franjas :: franjas(ayuda='Franjas semanales en las que puedes ofrecer o recibir servicios.')}"></fieldset>
 
+            <fieldset class="form-section">
+                <legend>Tratamiento de datos personales</legend>
+                <div class="form-field form-check-field">
+                    <input type="checkbox" th:field="*{aceptaPolitica}" id="aceptaPolitica" required
+                           th:classappend="${#fields.hasErrors('aceptaPolitica')} ? 'is-invalid'"
+                           th:attr="aria-invalid=${#fields.hasErrors('aceptaPolitica')},
+                                    aria-errormessage=${#fields.hasErrors('aceptaPolitica')} ? 'aceptaPolitica-error' : null">
+                    <label for="aceptaPolitica">He leído y acepto la
+                        <a th:href="@{/politica-datos}" target="_blank" rel="noopener">política de tratamiento de datos personales</a>
+                        <abbr title="obligatorio">*</abbr></label>
+                    <strong th:if="${#fields.hasErrors('aceptaPolitica')}" id="aceptaPolitica-error" class="field-error"
+                            th:errors="*{aceptaPolitica}">Error de la aceptación</strong>
+                </div>
+            </fieldset>
+
             <div class="form-actions">
                 <button type="submit" class="btn-solid theme-primary btn-lg">Guardar perfil</button>
             </div>

@@ -7,6 +7,7 @@ import com.atenea.unimarket.datos.modelo.FranjaHorario;
 import com.atenea.unimarket.negocio.PerfilService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -24,6 +25,9 @@ public class PerfilFormulario {
 
     @Valid
     private List<FranjaFormulario> franjas = new ArrayList<>();
+
+    @AssertTrue(message = "Debes aceptar la política de tratamiento de datos personales.")
+    private boolean aceptaPolitica;
 
     public List<FranjaHorario> horarios() {
         return franjas.stream().map(FranjaFormulario::aFranja).toList();
@@ -51,5 +55,13 @@ public class PerfilFormulario {
 
     public void setFranjas(List<FranjaFormulario> franjas) {
         this.franjas = franjas;
+    }
+
+    public boolean isAceptaPolitica() {
+        return aceptaPolitica;
+    }
+
+    public void setAceptaPolitica(boolean aceptaPolitica) {
+        this.aceptaPolitica = aceptaPolitica;
     }
 }

@@ -82,11 +82,13 @@ class PerfilControllerTests {
                         .param("telefonoContacto", "300 123 4567")
                         .param("franjas[0].dia", "LUNES")
                         .param("franjas[0].inicio", "08:00")
-                        .param("franjas[0].fin", "10:00"))
+                        .param("franjas[0].fin", "10:00")
+                        .param("aceptaPolitica", "true"))
                 .andExpect(flash().attribute("mensaje", "Tu perfil fue creado."));
 
         Usuario usuario = usuarios.findByGoogleSub("sub-ana").orElseThrow();
         assertThat(usuario.getNombre()).isEqualTo("Ana María");
+        assertThat(usuario.getFechaAceptacionPolitica()).isEqualTo(usuario.getFechaCreacion());
         assertThat(usuario.getCorreoInstitucional()).isEqualTo("ana@unal.edu.co");
         Perfil perfil = perfiles.findByUsuarioId(usuario.getId()).orElseThrow();
         assertThat(perfil.getTelefonoContacto()).isEqualTo("3001234567");
@@ -110,7 +112,8 @@ class PerfilControllerTests {
         mvc.perform(get("/perfiles/" + perfilAna.getUsuario().getId()).with(como("sub-beto", "beto@unal.edu.co")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Ana")))
-                .andExpect(content().string(containsString("Sin horarios registrados.")));
+                .andExpect(content().string(containsString("Sin horarios registrados.")))
+                .andExpect(content().string(not(containsString("3001234567"))));
     }
 
     @Test
@@ -170,9 +173,56 @@ class PerfilControllerTests {
                 .andExpect(content().string(not(containsString("Franja 1"))));
         mvc.perform(post("/perfil/nuevo").with(ana()).with(csrf())
                         .param("nombre", "Ana")
-                        .param("telefonoContacto", "3001234567"))
+                        .param("telefonoContacto", "3001234567")
+                        .param("aceptaPolitica", "true"))
                 .andExpect(flash().attribute("mensaje", "Tu perfil fue creado."));
         assertThat(perfiles.count()).isEqualTo(1);
+    }
+
+    @Test
+    void elFormularioPideAceptarLaPoliticaYEnlazaSuTexto() throws Exception {
+        mvc.perform(get("/perfil/nuevo").with(ana()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("id=\"aceptaPolitica\"")))
+                .andExpect(content().string(containsString("href=\"/politica-datos\"")));
+    }
+
+    @Test
+    void sinAceptarLaPoliticaNoCreaNadaYConservaLoIngresado() throws Exception {
+        mvc.perform(post("/perfil/nuevo").with(ana()).with(csrf())
+                        .param("nombre", "Ana")
+                        .param("telefonoContacto", "3001234567"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Debes aceptar la política de tratamiento de datos personales.")))
+                .andExpect(content().string(containsString("value=\"3001234567\"")));
+        mvc.perform(post("/perfil/nuevo").with(ana()).with(csrf())
+                        .param("nombre", "Ana")
+                        .param("telefonoContacto", "3001234567")
+                        .param("aceptaPolitica", "false"))
+                .andExpect(content().string(containsString("Debes aceptar la política de tratamiento de datos personales.")));
+        assertThat(usuarios.count()).isZero();
+    }
+
+    @Test
+    void laPoliticaSePuedeLeerAntesDeCrearLaCuenta() throws Exception {
+        mvc.perform(get("/politica-datos").with(ana()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Política de tratamiento de datos personales")))
+                .andExpect(content().string(containsString("1581 de 2012")))
+                .andExpect(content().string(containsString("unal.edu.co")))
+                .andExpect(content().string(not(containsString("href=\"/servicios\""))));
+        assertThat(usuarios.count()).isZero();
+    }
+
+    @Test
+    void usuarioRegistradoVeLaPoliticaConElMenuYEnlaceEnElEncabezado() throws Exception {
+        servicio.registrar("sub-ana", "ana@unal.edu.co", "Ana", "3001234567", List.of());
+        mvc.perform(get("/politica-datos").with(ana()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("href=\"/servicios\"")))
+                .andExpect(content().string(containsString("aria-current=\"page\">Política de datos</a>")));
+        mvc.perform(get("/").with(ana()))
+                .andExpect(content().string(containsString("href=\"/politica-datos\"")));
     }
 
     @Test

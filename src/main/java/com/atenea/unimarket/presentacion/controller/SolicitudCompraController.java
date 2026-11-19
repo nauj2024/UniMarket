@@ -108,6 +108,7 @@ public class SolicitudCompraController {
 
         model.addAttribute("solicitud", solicitud);
         model.addAttribute("propuestas", listaPropuestas);
+        model.addAttribute("propuestaVigenteId", ultimaPropuesta.getId());
         model.addAttribute("esCliente", esCliente);
         model.addAttribute("esMiTurno", esMiTurno);
         model.addAttribute("puedeRechazar", esOfertador && solicitud.getEstado() == EstadoSolicitud.NEGOCIANDO);
@@ -147,9 +148,10 @@ public class SolicitudCompraController {
 
     @PostMapping("/solicitudes/{id}/aceptar")
     public String aceptar(@AuthenticationPrincipal OidcUser oidc, @PathVariable Integer id,
+            @RequestParam Integer propuestaId,
             RedirectAttributes redireccion) {
         try {
-            solicitudes.aceptar(id, usuarioActual(oidc).getId());
+            solicitudes.aceptar(id, usuarioActual(oidc).getId(), propuestaId);
             redireccion.addFlashAttribute("mensaje", "Aceptaste la propuesta. La negociación ha finalizado y el servicio se encuentra activo.");
         } catch (SolicitudNoEncontradaException noExiste) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);

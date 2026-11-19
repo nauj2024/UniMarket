@@ -112,7 +112,7 @@ Basado en el [esquema, E3 p. 13](diagramas/persistencia.png). Todas las tablas t
 
 | Tabla | Columnas aparte de id |
 | --- | --- |
-| `usuario` | `google_sub varchar(255) NN UNIQUE`, `nombre varchar(100) NN`, `correo_institucional varchar(150) NN UNIQUE`, `fecha_creacion timestamp NN` |
+| `usuario` | `google_sub varchar(255) NN UNIQUE`, `nombre varchar(100) NN`, `correo_institucional varchar(150) NN UNIQUE`, `fecha_creacion timestamp NN`, `fecha_aceptacion_politica timestamp` |
 | `perfil` | `usuario_id integer NN UNIQUE`, `telefono_contacto varchar(20)`, `horarios_disponibilidad text (JSON)`, `fecha_creacion timestamp NN`, `fecha_actualizacion timestamp NN` |
 | `categoria` | `nombre varchar(100) NN UNIQUE` |
 | `servicio` | `ofertador_id integer NN`, `categoria_id integer NN`, `titulo varchar(100) NN`, `descripcion text NN`, `tarifa_por_hora integer NN`, `intensidad_horaria integer NN`, `experiencia text`, `especialidad varchar(100)`, `horarios_disponibilidad text (JSON)`, `fecha_publicacion timestamp NN`, `estado varchar(20) NN` |

@@ -69,6 +69,7 @@ class PerfilServiceTests {
         assertThat(guardado.getHorariosDisponibilidad()).isEqualTo(horarios);
         assertThat(guardado.getFechaCreacion()).isEqualTo(usuario.getFechaCreacion());
         assertThat(guardado.getFechaActualizacion()).isEqualTo(guardado.getFechaCreacion());
+        assertThat(usuario.getFechaAceptacionPolitica()).isEqualTo(usuario.getFechaCreacion());
     }
 
     @Test

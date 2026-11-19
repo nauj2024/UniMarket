@@ -48,6 +48,9 @@ public class PerfilService {
      * If the identity is already registered, including a concurrent duplicate submit, nothing is
      * saved and {@link PerfilYaExisteException} is thrown.
      * <p>
+     * Registering requires accepting the data treatment policy, which the profile form enforces,
+     * so the acceptance date is the registration date.
+     * <p>
      * The transaction writes before it reads anything: on SQLite, a transaction that read first
      * and then tries to write can fail with SQLITE_BUSY instead of waiting for the lock. Writing
      * first makes a concurrent submit wait, then fail on the unique {@code google_sub}. The SQLite
@@ -62,7 +65,9 @@ public class PerfilService {
         Instant ahora = Instant.now(reloj);
         try {
             return transaccion.execute(estado -> {
-                Usuario usuario = usuarios.saveAndFlush(new Usuario(googleSub, nombreLimpio, correo, ahora));
+                Usuario nuevo = new Usuario(googleSub, nombreLimpio, correo, ahora);
+                nuevo.aceptarPoliticaDatos(ahora);
+                Usuario usuario = usuarios.saveAndFlush(nuevo);
                 return perfiles.saveAndFlush(new Perfil(usuario, telefono, horarios, ahora));
             });
         } catch (DataAccessException fallo) {

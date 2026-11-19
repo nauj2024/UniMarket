@@ -5,6 +5,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.atenea.unimarket.negocio.UsuarioService;
+import com.atenea.unimarket.presentacion.controller.PoliticaDatosController;
 
 @Configuration
 class ConfiguracionWeb implements WebMvcConfigurer {
@@ -18,7 +19,7 @@ class ConfiguracionWeb implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new PerfilObligatorioInterceptor(usuarios))
-                .excludePathPatterns(PerfilObligatorioInterceptor.FORMULARIO, "/login", "/dev/login", "/error",
+                .excludePathPatterns(PerfilObligatorioInterceptor.FORMULARIO, PoliticaDatosController.RUTA, "/login", "/dev/login", "/error",
                         "/css/**", "/js/**", "/images/**", "/favicon.ico");
     }
 }

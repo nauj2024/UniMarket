@@ -56,12 +56,16 @@
                 <a class="menu-item" th:href="@{/perfil}" th:attr="aria-current=${seccion == 'perfil'} ? 'page' : null">
                     <svg th:replace="~{fragmentos/iconos :: icono('perfil')}"></svg>Mi perfil
                 </a>
+                <a class="menu-item" th:href="@{/politica-datos}"
+                   th:attr="aria-current=${seccion == 'politica'} ? 'page' : null">Política de datos</a>
                 <form th:action="@{/logout}" method="post" class="m-0">
                     <button type="submit" class="menu-item">Cerrar sesión</button>
                 </form>
             </div>
         </div>
-        <form th:if="${seccion == 'registro'}" th:action="@{/logout}" method="post" class="ms-auto">
+        <a th:if="${seccion == 'registro'}" class="ms-auto app-header-link"
+           th:href="@{/politica-datos}">Política de datos</a>
+        <form th:if="${seccion == 'registro'}" th:action="@{/logout}" method="post" class="m-0 flex-shrink-0">
             <button type="submit" class="btn-text theme-secondary btn-sm">Cerrar sesión</button>
         </form>
     </div>

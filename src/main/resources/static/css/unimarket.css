@@ -67,6 +67,12 @@ h2 { font-size: 1.25rem; line-height: 1.3; }
     width: min(18rem, calc(100vw - 2rem));
 }
 
+.app-header-link { color: var(--unal-gray); font-size: .875rem; }
+.form-check-field { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; }
+.form-check-field .field-error { flex-basis: 100%; }
+.politica section { margin-bottom: 1.75rem; }
+.politica h2 { margin-bottom: .5rem; }
+
 /* Bottom navigation is the only layout Bootstrap does not supply. */
 .app-nav {
     padding: .375rem max(.25rem, env(safe-area-inset-right, 0px)) max(.375rem, env(safe-area-inset-bottom, 0px)) max(.25rem, env(safe-area-inset-left, 0px));
