@@ -85,7 +85,7 @@ Actor: cliente. E2 pp. 15-16, 29-30.
 - Ordenar según la prioridad elegida por el cliente. Por defecto, fecha de publicación ascendente.
 - Permitir uno o más filtros por categoría y búsqueda por palabra clave o nombre de persona o negocio.
 - Sin criterios, conservar el catálogo completo de servicios disponibles. Sin coincidencias, informar y sugerir ajustar criterios.
-- Mostrar detalle con descripción, categoría, tarifa, intensidad, perfil e información del ofertador y calificaciones.
+- Mostrar detalle con descripción, categoría, tarifa, intensidad, perfil e información del ofertador y calificaciones. El detalle no muestra el teléfono del ofertador; el cliente lo contacta por el chat de UniMarket.
 - Si el servicio deja de estar disponible durante la consulta, informar y regresar al listado.
 - Desde el detalle, permitir guardarlo en la colección del cliente y confirmar la acción.
 

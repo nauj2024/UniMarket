@@ -75,9 +75,9 @@
                     <div class="rate-actions">
                         <a th:unless="${esOfertador}" th:if="${servicio.estado.name() == 'DISPONIBLE'}"
                            th:href="@{/servicios/{id}/solicitar(id=${servicio.id})}" class="btn-solid theme-primary">Solicitar servicio</a>
-                        <a th:href="@{/perfiles/{id}(id=${servicio.ofertador.id})}" class="btn-outline theme-primary">Ver contacto del ofertador</a>
-                        <a th:if="${esOfertador}" th:href="@{/servicios/{id}/editar(id=${servicio.id})}" class="btn-outline theme-primary">Editar servicio</a>
                         <a th:unless="${esOfertador}" th:href="@{/servicios/{id}/chat(id=${servicio.id})}" class="btn-outline theme-primary">Chatear con el ofertador</a>
+                        <a th:href="@{/perfiles/{id}(id=${servicio.ofertador.id})}" class="btn-outline theme-primary">Ver perfil del ofertador</a>
+                        <a th:if="${esOfertador}" th:href="@{/servicios/{id}/editar(id=${servicio.id})}" class="btn-outline theme-primary">Editar servicio</a>
                     </div>
                 </section>
             </aside>

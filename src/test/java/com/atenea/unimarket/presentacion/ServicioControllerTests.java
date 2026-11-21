@@ -394,6 +394,19 @@ class ServicioControllerTests {
                 .andExpect(content().string(not(containsString("/servicios/" + id + "/editar"))));
     }
 
+    @Test
+    void elDetalleNoMuestraElTelefonoYElContactoEsPorChat() throws Exception {
+        Integer id = publicarDeAna();
+        perfiles.registrar("sub-beto", "beto@unal.edu.co", "Beto", "3109876543", List.of());
+
+        mvc.perform(get("/servicios/" + id).with(como("sub-beto")))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("3001234567"))))
+                .andExpect(content().string(not(containsString("Ver contacto del ofertador"))))
+                .andExpect(content().string(containsString("/servicios/" + id + "/chat")))
+                .andExpect(content().string(containsString("Ver perfil del ofertador")));
+    }
+
     private JsonNode datosIniciales(String html) {
         int script = html.indexOf("id=\"catalogo-inicial\"");
         assertThat(script).isGreaterThanOrEqualTo(0);
