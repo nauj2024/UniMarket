@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="'Chat con ' + ${otraPersona} + ' | UniMarket'">Chat | UniMarket</title>
+    <link th:replace="~{fragmentos/bootstrap :: styles}">
+</head>
+<body>
+<header th:replace="~{fragmentos/encabezado :: encabezado('conversaciones')}"></header>
+<main class="container app-main">
+    <article>
+        <header class="page-head">
+            <h1 th:text="'Chat con ' + ${otraPersona}">Chat con Ana</h1>
+            <p class="byline">
+                Sobre
+                <a th:href="@{/servicios/{id}(id=${servicio.id})}" th:text="${servicio.titulo}">Servicio</a>
+            </p>
+        </header>
+
+        <section class="panel" aria-labelledby="mensajes-titulo">
+            <h2 id="mensajes-titulo">Mensajes</h2>
+            <p id="sin-mensajes" th:if="${#lists.isEmpty(mensajes)}" class="mb-0">
+                Todavía no hay mensajes. Escribe el primero para iniciar la conversación.
+            </p>
+            <ul id="lista-mensajes" class="service-list" aria-live="polite"
+                th:attr="data-url-mensajes=${urlMensajes != null} ? @{${urlMensajes}} : null">
+                <li th:each="mensaje : ${mensajes}" th:attr="data-id=${mensaje.id}">
+                    <article class="service-row">
+                        <h3 th:text="${mensaje.autor.id == yoId} ? 'Tú' : ${mensaje.autor.nombre}">Ana</h3>
+                        <p class="prose mb-0" th:text="${mensaje.contenido}">Hola, ¿sigue disponible?</p>
+                        <p class="service-meta">
+                            <time th:datetime="${mensaje.fechaEnvio}" th:text="${fecha.texto(mensaje.fechaEnvio)}">3 de noviembre de 2026, 12:00</time>
+                        </p>
+                    </article>
+                </li>
+            </ul>
+        </section>
+
+        <form th:action="@{${accionEnvio}}" th:object="${nuevoMensaje}" method="post" novalidate class="app-form"
+              onsubmit="this.querySelector('button[type=submit]').disabled = true">
+            <div th:if="${#fields.hasErrors('*')}" role="alert" class="alert theme-danger form-errors">
+                <div>
+                    <h2>Revisa tu mensaje</h2>
+                    <ul>
+                        <li th:each="error : ${#fields.allErrors()}" th:text="${error}">Error</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <div class="form-field">
+                    <label for="contenido">Tu mensaje</label>
+                    <textarea th:field="*{contenido}" id="contenido" class="form-control" rows="3" required
+                              th:maxlength="${limite}"
+                              th:classappend="${#fields.hasErrors('contenido')} ? 'is-invalid'"
+                              th:attr="aria-invalid=${#fields.hasErrors('contenido')},
+                                       aria-errormessage=${#fields.hasErrors('contenido')} ? 'contenido-error' : null"></textarea>
+                    <strong th:if="${#fields.hasErrors('contenido')}" id="contenido-error" class="field-error"
+                            th:errors="*{contenido}">Error</strong>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-solid theme-primary">Enviar</button>
+                    <a th:href="@{/servicios/{id}(id=${servicio.id})}" class="btn-outline theme-primary">Volver al servicio</a>
+                </div>
+            </div>
+        </form>
+    </article>
+</main>
+<script th:replace="~{fragmentos/bootstrap :: scripts}"></script>
+<script type="module" th:src="@{/js/chat/chat.js}"></script>
+</body>
+</html>
