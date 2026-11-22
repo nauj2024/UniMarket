@@ -5,15 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Catálogo | UniMarket</title>
     <link th:replace="~{fragmentos/bootstrap :: styles}">
-    <script type="importmap" th:inline="javascript">
-    {
-      "imports": {
-        "preact": [[@{/js/vendor/preact-11.1.1/preact.mjs}]],
-        "preact/hooks": [[@{/js/vendor/preact-11.1.1/hooks.mjs}]],
-        "htm": [[@{/js/vendor/htm-3.1.1/htm.module.js}]]
-      }
-    }
-    </script>
 </head>
 <body>
 <header th:replace="~{fragmentos/encabezado :: encabezado('catalogo')}"></header>

@@ -41,7 +41,15 @@ Asociaciones visibles:
 
 Las páginas 6 y 8 descartan entidades separadas para cliente, ofertador, negociación, intercambio, formulario y buscador. Negociación se representa mediante SolicitudCompra y el intercambio mediante sus propuestas. Categoría sí es entidad. `numeroRonda` ordena propuestas.
 
-`Notificador` en el modelo tiene datos de una notificación persistida; `INotificador` y `NotificadorCorreo` en diseño son el mecanismo de envío. Son responsabilidades distintas. Las notificaciones de la aplicación se persisten en la transacción de la solicitud y se anuncian por SSE después del commit. Los tipos son `SOLICITUD_RECIBIDA`, `CONTRAPROPUESTA_RECIBIDA`, `ACUERDO_CONFIRMADO` y `SOLICITUD_RECHAZADA`. Leer y descartar son estados persistidos independientes; descartar retira el aviso del desplegable, pero lo conserva en el historial. Falta definir el envío externo y sus reintentos y fallos. Reseñas y denuncias no aparecen modeladas aquí; eso no las retira del alcance.
+`Notificador` en el modelo tiene datos de una notificación persistida; `INotificador` y `NotificadorCorreo` en diseño son el mecanismo de envío. Son responsabilidades distintas. Las notificaciones de la aplicación se persisten en la transacción de la solicitud y se anuncian por SSE después del commit. Leer y descartar son estados persistidos independientes; descartar retira el aviso del desplegable, pero lo conserva en el historial. Falta definir el envío externo y sus reintentos y fallos. Reseñas y denuncias no aparecen modeladas aquí; eso no las retira del alcance.
+
+Por defecto, el historial agrupa las notificaciones por su tipo guardado y muestra primero las más recientes de cada grupo. El interruptor «Agrupar por categoría» permite ver una sola lista, de la más reciente a la más antigua. El navegador recuerda la preferencia.
+
+| Categoría | Valores de `TipoNotificacion` |
+| --- | --- |
+| Negociación | `SOLICITUD_RECIBIDA`, `CONTRAPROPUESTA_RECIBIDA` |
+| Acuerdos | `ACUERDO_CONFIRMADO` |
+| Cancelaciones | `SOLICITUD_RECHAZADA` |
 
 ## Estados
 

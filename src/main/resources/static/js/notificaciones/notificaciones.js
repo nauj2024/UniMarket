@@ -1,4 +1,5 @@
 import { h, render } from 'preact';
+import { useState } from 'preact/hooks';
 import htm from 'htm';
 import { createInbox } from './store.js';
 import { useInbox } from './use-inbox.js';
@@ -6,16 +7,44 @@ import { NotificationContent } from './components/content.js';
 import { NotificationDropdown } from './components/dropdown.js';
 
 const html = htm.bind(h);
+const groupingPreference = 'unimarket.notificationHistory.groupByCategory';
+
+function preferredGrouping() {
+    try {
+        return localStorage.getItem(groupingPreference) !== 'false';
+    } catch {
+        return true;
+    }
+}
 
 function Notifications({ inbox, urls, history = false }) {
     const { state, undo, dismissed, restore } = useInbox(inbox, history);
+    const [grouped, setGrouped] = useState(() => history && preferredGrouping());
     const content = html`<${NotificationContent}
         state=${state} inbox=${inbox} solicitudes=${urls.solicitudes}
-        history=${history} undo=${undo} onDismiss=${dismissed} onRestore=${restore} />`;
+        history=${history} grouped=${grouped} undo=${undo} onDismiss=${dismissed} onRestore=${restore} />`;
 
     if (history) {
-        return html`<section class="notification-history border rounded-7 overflow-hidden"
-            aria-label="Notificaciones">${content}</section>`;
+        function changeGrouping(event) {
+            const checked = event.currentTarget.checked;
+            setGrouped(checked);
+            try {
+                localStorage.setItem(groupingPreference, String(checked));
+            } catch {
+                // The current view still works when the browser blocks storage.
+            }
+        }
+        return html`
+            <label class="d-inline-flex align-items-center gap-2 mb-4 fs-sm fw-medium"
+                for="agrupar-notificaciones">
+                <span class="switch theme-primary">
+                    <input id="agrupar-notificaciones" type="checkbox" role="switch"
+                        checked=${grouped} onChange=${changeGrouping} />
+                </span>
+                Agrupar por categoría
+            </label>
+            <section class="notification-history border rounded-7 overflow-hidden"
+                aria-label="Notificaciones">${content}</section>`;
     }
     return html`<${NotificationDropdown} unread=${state.sinLeer} href=${urls.historial}>
         ${content}

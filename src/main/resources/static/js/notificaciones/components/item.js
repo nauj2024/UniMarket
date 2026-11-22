@@ -48,7 +48,7 @@ export function Notification({ item, inbox, solicitudes, dismissible, onDismiss 
         await inbox.read(item.id);
         location.assign(href);
     }
-    return html`<li class="notification-item d-flex align-items-start text-start gap-4 p-6 border-bottom"
+    return html`<li class=${`notification-item d-flex align-items-start text-start gap-4 border-bottom ${dismissible ? 'p-6' : 'px-6 py-4'}`}
         onMouseEnter=${enter} onMouseLeave=${cancel}>
         <span class=${`notification-type d-flex align-items-center justify-content-center rounded-5 flex-shrink-0 fg-${type.theme} bg-subtle-${type.theme}`} title=${type.title}>
             <${Icon} name=${type.icon}/>

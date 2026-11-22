@@ -399,7 +399,18 @@ abbr[title="obligatorio"] { color: var(--um-error); text-decoration: none; curso
 .notification-bell { width: 2.75rem; min-height: 2.75rem; }
 .notification-dot { width: .4375rem; height: .4375rem; border-radius: 50%; background: var(--unal-green-ink); }
 .notification-bell-dot { position: absolute; top: .5rem; right: .625rem; box-shadow: 0 0 0 2px var(--um-surface); }
+.notification-page-head { margin-bottom: .875rem; }
 .notification-history { background: var(--um-surface); }
+.notification-history:has(.notification-group) { background: transparent; border-inline: 0; border-radius: 0; }
+.notification-group { display: grid; grid-template-columns: 9rem minmax(0, 1fr); }
+.notification-group + .notification-group { border-top: var(--bs-border-width) solid var(--bs-border-color); }
+.notification-category { padding: .75rem .625rem; }
+.notification-group .notification-list { border-inline-start: var(--bs-border-width) solid var(--bs-border-color); }
+@media (max-width: 480px) {
+    .notification-group { grid-template-columns: minmax(0, 1fr); }
+    .notification-category { padding: .75rem 1.25rem .125rem; }
+    .notification-group .notification-list { border-inline-start: 0; }
+}
 .notification-panel { z-index: 1050; top: calc(100% + .75rem); right: 0; width: 24.375rem; max-width: calc(100vw - 2rem); background: var(--um-surface); }
 .notification-list { list-style: none; }
 .notification-panel .notification-list { max-height: 24rem; overflow-y: auto; overscroll-behavior: contain; }
