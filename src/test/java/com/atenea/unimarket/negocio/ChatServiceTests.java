@@ -283,4 +283,53 @@ class ChatServiceTests {
 
         assertThat(chat.mensajesDe(7, ana.getId())).containsExactly(primero, segundo);
     }
+
+    // ---- conversacionesDe: la lista de conversaciones (CHAT-USR-H02) ----
+
+    @Test
+    void paraElClienteLaOtraPersonaEsElOfertador() {
+        Mensaje ultimo = new Mensaje(conversacion, ana, "Sí, sigue disponible", AHORA);
+        when(mensajes.ultimosMensajesDeLasConversacionesDe(2)).thenReturn(List.of(ultimo));
+
+        List<ResumenConversacion> lista = chat.conversacionesDe(beto.getId());
+
+        assertThat(lista).hasSize(1);
+        assertThat(lista.getFirst().conversacion()).isSameAs(conversacion);
+        assertThat(lista.getFirst().otraPersona()).isSameAs(ana);
+        assertThat(lista.getFirst().ultimoMensaje()).isSameAs(ultimo);
+        assertThat(lista.getFirst().ultimoEsDe(beto.getId())).isFalse();
+    }
+
+    @Test
+    void paraElOfertadorLaOtraPersonaEsElCliente() {
+        Mensaje ultimo = new Mensaje(conversacion, ana, "Sí, sigue disponible", AHORA);
+        when(mensajes.ultimosMensajesDeLasConversacionesDe(1)).thenReturn(List.of(ultimo));
+
+        ResumenConversacion resumen = chat.conversacionesDe(ana.getId()).getFirst();
+
+        assertThat(resumen.otraPersona()).isSameAs(beto);
+        assertThat(resumen.ultimoEsDe(ana.getId())).isTrue();
+    }
+
+    @Test
+    void laListaConservaElOrdenDelRepositorio() {
+        Servicio otroServicio = new Servicio(carla, mock(Categoria.class), "Inglés", "Clases de inglés.",
+                20000, 2, null, null, List.of(), AHORA);
+        Conversacion conCarla = new Conversacion(otroServicio, beto, AHORA);
+        Mensaje masReciente = new Mensaje(conCarla, beto, "¿Tienes cupo el sábado?", AHORA);
+        Mensaje masAntiguo = new Mensaje(conversacion, beto, "Hola Ana", AHORA);
+        when(mensajes.ultimosMensajesDeLasConversacionesDe(2)).thenReturn(List.of(masReciente, masAntiguo));
+
+        assertThat(chat.conversacionesDe(beto.getId()))
+                .extracting(ResumenConversacion::otraPersona)
+                .containsExactly(carla, ana);
+    }
+
+    @Test
+    void sinConversacionesLaListaEstaVacia() {
+        when(mensajes.ultimosMensajesDeLasConversacionesDe(3)).thenReturn(List.of());
+
+        assertThat(chat.conversacionesDe(carla.getId())).isEmpty();
+        verifyNoInteractions(conversaciones, servicios, usuarios);
+    }
 }

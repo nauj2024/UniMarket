@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Conversaciones | UniMarket</title>
+    <link th:replace="~{fragmentos/bootstrap :: styles}">
+</head>
+<body>
+<header th:replace="~{fragmentos/encabezado :: encabezado('conversaciones')}"></header>
+<main class="container app-main">
+    <div class="page-head">
+        <h1>Conversaciones</h1>
+        <p>Tus chats con clientes y ofertadores, el más reciente primero.</p>
+    </div>
+
+    <section class="panel" th:unless="${#lists.isEmpty(conversaciones)}" aria-label="Conversaciones">
+        <ul class="service-list">
+            <li th:each="resumen : ${conversaciones}">
+                <article class="service-row">
+                    <h2>
+                        <a th:href="@{/conversaciones/{id}(id=${resumen.conversacion.id})}"
+                           th:text="${resumen.otraPersona.nombre}">Ana</a>
+                    </h2>
+                    <p class="byline">
+                        Sobre <span th:text="${resumen.conversacion.servicio.titulo}">Cálculo I</span>
+                    </p>
+                    <p class="mb-0"
+                       th:text="${(resumen.ultimoEsDe(yoId) ? 'Tú: ' : '') + #strings.abbreviate(resumen.ultimoMensaje.contenido, 120)}">Tú: Hola, ¿sigue disponible?</p>
+                    <p class="service-meta">
+                        <time th:datetime="${resumen.ultimoMensaje.fechaEnvio}"
+                              th:text="${fecha.texto(resumen.ultimoMensaje.fechaEnvio)}">3 de noviembre de 2026, 12:00</time>
+                    </p>
+                </article>
+            </li>
+        </ul>
+    </section>
+
+    <section class="panel" th:if="${#lists.isEmpty(conversaciones)}">
+        <p class="mb-0">
+            Todavía no tienes conversaciones. Para escribirle a un ofertador, abre un servicio del
+            <a th:href="@{/servicios}">catálogo</a> y elige «Chatear con el ofertador».
+        </p>
+    </section>
+</main>
+<script th:replace="~{fragmentos/bootstrap :: scripts}"></script>
+</body>
+</html>

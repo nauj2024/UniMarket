@@ -87,6 +87,16 @@ public class ChatController {
         }
     }
 
+    /** CHAT-USR-H02: las conversaciones del usuario, la más reciente primero. */
+    @GetMapping("/conversaciones")
+    public String lista(@AuthenticationPrincipal OidcUser oidc, Model model) {
+        Usuario yo = usuarioActual(oidc);
+        model.addAttribute("conversaciones", chat.conversacionesDe(yo.getId()));
+        model.addAttribute("yoId", yo.getId());
+        model.addAttribute("fecha", new SolicitudCompraController.FormatoFecha());
+        return "conversacion/lista";
+    }
+
     /** La conversación con sus mensajes. Solo la ven el cliente y el ofertador. */
     @GetMapping("/conversaciones/{id}")
     public String ver(@AuthenticationPrincipal OidcUser oidc, @PathVariable Integer id, Model model) {

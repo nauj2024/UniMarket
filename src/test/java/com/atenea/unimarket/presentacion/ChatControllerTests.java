@@ -269,6 +269,64 @@ class ChatControllerTests {
                 .andExpect(jsonPath("$[1].propio").value(true));
     }
 
+    // ---- lista de conversaciones (CHAT-USR-H02) ----
+
+    @Test
+    void elMenuTieneLaOpcionDeConversaciones() throws Exception {
+        mvc.perform(get("/servicios").with(beto()))
+                .andExpect(content().string(containsString("href=\"/conversaciones\"")));
+    }
+
+    @Test
+    void laListaMuestraConQuienEsElServicioYEnlazaALaConversacion() throws Exception {
+        chat.enviarAlOfertador(betoId, servicioId, "Hola, ¿sigue disponible?");
+        Integer id = conversacionId();
+
+        mvc.perform(get("/conversaciones").with(beto()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("conversacion/lista"))
+                .andExpect(content().string(containsString("href=\"/conversaciones/" + id + "\"")))
+                .andExpect(content().string(containsString(">Ana</a>")))
+                .andExpect(content().string(containsString("Cálculo I")))
+                .andExpect(content().string(containsString("Tú:")))
+                .andExpect(content().string(containsString("Hola, ¿sigue disponible?")));
+        mvc.perform(get("/conversaciones").with(ana()))
+                .andExpect(content().string(containsString("href=\"/conversaciones/" + id + "\"")))
+                .andExpect(content().string(containsString(">Beto</a>")))
+                .andExpect(content().string(not(containsString("Tú:"))));
+    }
+
+    @Test
+    void laListaSoloIncluyeLasConversacionesDelUsuario() throws Exception {
+        chat.enviarAlOfertador(betoId, servicioId, "Mensaje privado");
+
+        mvc.perform(get("/conversaciones").with(carla()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("/conversaciones/" + conversacionId()))))
+                .andExpect(content().string(not(containsString("Mensaje privado"))))
+                .andExpect(content().string(containsString("Todavía no tienes conversaciones.")));
+    }
+
+    @Test
+    void elUltimoMensajeSeMuestraEscapado() throws Exception {
+        chat.enviarAlOfertador(betoId, servicioId, "<script>alert(1)</script>");
+
+        mvc.perform(get("/conversaciones").with(ana()))
+                .andExpect(content().string(containsString("&lt;script&gt;alert(1)&lt;/script&gt;")))
+                .andExpect(content().string(not(containsString("<script>alert(1)"))));
+    }
+
+    @Test
+    void sinSesionNoSeVeLaLista() throws Exception {
+        mvc.perform(get("/conversaciones")).andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    void sinPerfilLaListaLlevaAlFormularioDelPerfil() throws Exception {
+        mvc.perform(get("/conversaciones").with(como("sub-sin-perfil")))
+                .andExpect(redirectedUrl("/perfil/nuevo"));
+    }
+
     private Integer conversacionId() {
         return conversaciones.findByServicioIdAndClienteId(servicioId, betoId).orElseThrow().getId();
     }

@@ -117,6 +117,17 @@ public class ChatService {
         return mensajes.findByConversacionIdAndIdGreaterThanOrderByIdAsc(conversacionId, despuesDeId);
     }
 
+    /**
+     * CHAT-USR-H02: las conversaciones del usuario, como cliente o como ofertador, con la que tuvo
+     * actividad más reciente primero.
+     */
+    @Transactional(readOnly = true)
+    public List<ResumenConversacion> conversacionesDe(Integer usuarioId) {
+        return mensajes.ultimosMensajesDeLasConversacionesDe(usuarioId).stream()
+                .map(ultimo -> ResumenConversacion.de(ultimo, usuarioId))
+                .toList();
+    }
+
     private Usuario usuario(Integer id) {
         return usuarios.findById(id).orElseThrow(() -> new IllegalArgumentException("El usuario no existe."));
     }

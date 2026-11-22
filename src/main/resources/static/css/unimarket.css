@@ -97,7 +97,8 @@ h2 { font-size: 1.25rem; line-height: 1.3; }
     .app-nav .nav-item { flex: none; }
     .app-nav .nav-link { min-height: 5rem; font-size: .9375rem; font-weight: 600; border-radius: 0; border-bottom: 3px solid transparent; }
     .app-nav .nav-link.active { border-bottom-color: var(--unal-green); }
-    .app-nav-notifications .nav-link { min-height: 2.75rem; border: 0; border-radius: .5rem; }
+    .app-nav-notifications .nav-link,
+    .app-nav-conversations .nav-link { min-height: 2.75rem; border: 0; border-radius: .5rem; }
 }
 
 /* Page frame */

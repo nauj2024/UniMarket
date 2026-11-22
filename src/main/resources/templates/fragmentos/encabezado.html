@@ -33,6 +33,11 @@
                     <span class="app-nav-glyph d-flex align-items-center justify-content-center rounded-pill"><svg th:replace="~{fragmentos/iconos :: icono('notificaciones')}"></svg></span>
                     <span class="lg:d-none">Notificaciones</span><span class="visually-hidden d-none lg:d-inline">Notificaciones</span>
                 </a></li>
+                <li class="nav-item min-w-0 app-nav-conversations"><a class="nav-link align-items-center justify-content-center gap-1 p-0 flex-column lg:flex-row w-100" th:classappend="${seccion == 'conversaciones'} ? 'active'" th:href="@{/conversaciones}" title="Conversaciones"
+                       th:attr="aria-current=${seccion == 'conversaciones'} ? 'page' : null">
+                    <span class="app-nav-glyph d-flex align-items-center justify-content-center rounded-pill"><svg th:replace="~{fragmentos/iconos :: icono('conversaciones')}"></svg></span>
+                    <span class="lg:d-none" aria-hidden="true">Chats</span><span class="visually-hidden">Conversaciones</span>
+                </a></li>
                 <li class="nav-item min-w-0 lg:d-none"><a class="nav-link align-items-center justify-content-center gap-1 p-0 flex-column w-100" th:classappend="${seccion == 'perfil'} ? 'active'" th:href="@{/perfil}"
                        th:attr="aria-current=${seccion == 'perfil'} ? 'page' : null">
                     <span class="app-nav-glyph d-flex align-items-center justify-content-center rounded-pill"><svg th:replace="~{fragmentos/iconos :: icono('perfil')}"></svg></span>

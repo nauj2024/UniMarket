@@ -156,6 +156,59 @@ class ChatServiceIntegrationTests {
     }
 
     @Test
+    void cadaUsuarioVeSoloSusConversacionesUnaVezYLaMasRecientePrimero() {
+        Integer carlaId = perfiles.registrar("sub-carla", "carla@unal.edu.co", "Carla", "3201112233", List.of())
+                .getUsuario().getId();
+        Integer tutorias = catalogo.categorias().stream().filter(c -> c.getNombre().equals("Tutorías"))
+                .findFirst().orElseThrow().getId();
+        Integer servicioDeCarla = catalogo.publicar(carlaId, new DatosServicio(tutorias, "Inglés",
+                "Clases de inglés conversacional.", 20000, 2, null, null, List.of())).getId();
+
+        Integer conAna = chat.enviarAlOfertador(betoId, servicioId, "Hola Ana").getId();
+        chat.enviar(conAna, anaId, "Hola Beto");
+        Integer conCarla = chat.enviarAlOfertador(betoId, servicioDeCarla, "Hola Carla").getId();
+        chat.enviar(conAna, betoId, "¿Puede ser el sábado?"); // la de Ana vuelve a ser la más reciente
+
+        List<ResumenConversacion> deBeto = chat.conversacionesDe(betoId);
+        assertThat(deBeto).extracting(r -> r.conversacion().getId()).containsExactly(conAna, conCarla);
+        assertThat(deBeto).extracting(r -> r.otraPersona().getId()).containsExactly(anaId, carlaId);
+        assertThat(deBeto.getFirst().ultimoMensaje().getContenido()).isEqualTo("¿Puede ser el sábado?");
+
+        // Ana participa como ofertadora; Carla también, pero solo en la suya.
+        assertThat(chat.conversacionesDe(anaId)).extracting(r -> r.conversacion().getId()).containsExactly(conAna);
+        assertThat(chat.conversacionesDe(anaId).getFirst().otraPersona().getId()).isEqualTo(betoId);
+        assertThat(chat.conversacionesDe(carlaId)).extracting(r -> r.conversacion().getId()).containsExactly(conCarla);
+    }
+
+    @Test
+    void quienEsClienteEnUnaYOfertadorEnOtraVeAmbasConLaOtraPersonaCorrecta() {
+        Integer tutorias = catalogo.categorias().stream().filter(c -> c.getNombre().equals("Tutorías"))
+                .findFirst().orElseThrow().getId();
+        Integer servicioDeBeto = catalogo.publicar(betoId, new DatosServicio(tutorias, "Física",
+                "Tutorías de física mecánica.", 30000, 3, null, null, List.of())).getId();
+
+        Integer betoCliente = chat.enviarAlOfertador(betoId, servicioId, "Hola Ana").getId();
+        Integer betoOfertador = chat.enviarAlOfertador(anaId, servicioDeBeto, "Hola Beto, ¿das física?").getId();
+
+        List<ResumenConversacion> deBeto = chat.conversacionesDe(betoId);
+        assertThat(deBeto).extracting(r -> r.conversacion().getId()).containsExactly(betoOfertador, betoCliente);
+        assertThat(deBeto).extracting(r -> r.otraPersona().getId()).containsExactly(anaId, anaId);
+        assertThat(deBeto).extracting(r -> r.conversacion().getServicio().getTitulo())
+                .containsExactly("Física", "Cálculo I");
+        assertThat(deBeto.getFirst().ultimoEsDe(betoId)).isFalse();
+        assertThat(deBeto.getLast().ultimoEsDe(betoId)).isTrue();
+    }
+
+    @Test
+    void quienNoHaChateadoNoTieneConversaciones() {
+        chat.enviarAlOfertador(betoId, servicioId, "Hola Ana");
+        Integer carlaId = perfiles.registrar("sub-carla", "carla@unal.edu.co", "Carla", "3201112233", List.of())
+                .getUsuario().getId();
+
+        assertThat(chat.conversacionesDe(carlaId)).isEmpty();
+    }
+
+    @Test
     void elOfertadorNoPuedeAbrirUnChatConsigoMismoYNoQuedaNada() {
         assertThatThrownBy(() -> chat.enviarAlOfertador(anaId, servicioId, "Hola a mí mismo"))
                 .isInstanceOf(ChatNoPermitidoException.class);
