@@ -169,7 +169,7 @@ class KeyFeaturesIT {
         assertThat(seller.getByText("Este servicio tiene negociaciones en curso")).isVisible();
         assertThat(seller.getByLabel("Tarifa por hora")).not().isEditable();
         assertThat(seller.getByLabel("Horas por semana")).not().isEditable();
-        notification(seller, request).getByRole(AriaRole.LINK).click();
+        notification(seller, request).click();
         seller.getByLabel("Nueva tarifa por hora").fill("38000");
         seller.getByLabel("Nuevas horas semanales").fill("4");
         seller.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Enviar contrapropuesta")).click();
@@ -178,15 +178,15 @@ class KeyFeaturesIT {
 
         // The buyer accepts the counterproposal and the agreement is confirmed.
         notification(buyer, "Sofía Martínez envió una contrapropuesta para «" + TITLE
-                + "» a $38.000 COP por hora (4 horas por semana).").getByRole(AriaRole.LINK).click();
+                + "» a $38.000 COP por hora (4 horas por semana).").click();
         buyer.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Aceptar propuesta vigente")).click();
         assertThat(buyer.getByText("Aceptaste la propuesta.")).isVisible();
         assertThat(state(buyer)).hasText("ACTIVA");
 
         String agreement = "Acuerdo confirmado para «" + TITLE + "» entre Ana Rodríguez y Sofía Martínez"
                 + " a $38.000 COP por hora (4 horas por semana). El servicio está activo.";
-        assertThat(notification(seller, agreement)).isVisible();
-        assertThat(notification(buyer, agreement)).isVisible();
+        notification(seller, agreement);
+        notification(buyer, agreement);
 
         // An active service leaves the catalog.
         buyer.navigate("/servicios");
@@ -202,13 +202,14 @@ class KeyFeaturesIT {
         page.waitForURL(url -> !url.endsWith("/login"));
     }
 
-    /** Opens the notifications page and returns the entry with that exact message. */
+    /** Opens the notifications page and returns the link containing that exact message. */
     private static Locator notification(Page page, String message) {
         page.navigate("/notificaciones");
-        Locator entry = page.locator(".service-row").filter(new Locator.FilterOptions()
-                .setHas(page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName(message).setExact(true))));
-        assertThat(entry).hasCount(1);
-        return entry;
+        Locator link = page.locator("#notificaciones-historial").getByRole(AriaRole.LINK)
+                .filter(new Locator.FilterOptions()
+                        .setHas(page.getByText(message, new Page.GetByTextOptions().setExact(true))));
+        assertThat(link).isVisible();
+        return link;
     }
 
     private static Locator state(Page page) {
