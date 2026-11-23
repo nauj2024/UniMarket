@@ -141,18 +141,19 @@ public class SolicitudCompraService {
     /** La contraparte acepta la propuesta vigente: la solicitud y el servicio pasan a estar ACTIVA/ACTIVO. */
     @Transactional
     public SolicitudCompra aceptar(Integer solicitudId, Integer usuarioId, Integer propuestaId) {
+        // SQLite needs a write before the first read to serialize concurrent acceptances.
+        solicitudes.bloquearEscrituraParaAceptar(solicitudId);
         SolicitudCompra solicitud = solicitudes.findById(solicitudId)
                 .orElseThrow(SolicitudNoEncontradaException::new);
 
-        Integer servicioId = solicitud.getServicio().getId();
-        List<SolicitudCompra> negociacionesAbiertas = solicitudes
-                .findByServicioIdAndEstado(servicioId, EstadoSolicitud.NEGOCIANDO);
+        exigirParticipante(solicitud, usuarioId);
+        Servicio servicio = solicitud.getServicio();
+        Integer servicioId = servicio.getId();
 
-        if (solicitud.getServicio().getEstado() != EstadoServicio.DISPONIBLE
+        if (servicio.getEstado() != EstadoServicio.DISPONIBLE
                 || solicitudes.existsByServicioIdAndEstadoIn(servicioId, List.of(EstadoSolicitud.ACTIVA))) {
             throw new SolicitudNoPermitidaException("Este servicio ya fue contratado en otra negociación.");
         }
-        exigirParticipante(solicitud, usuarioId);
         if (solicitud.getEstado() != EstadoSolicitud.NEGOCIANDO) {
             throw new SolicitudNoPermitidaException("La solicitud no se encuentra en negociación.");
         }
@@ -168,6 +169,8 @@ public class SolicitudCompraService {
         if (!ultimaPropuesta.getId().equals(propuestaId)) {
             throw new SolicitudNoPermitidaException("La propuesta cambió. Revisa las condiciones actuales antes de aceptar.");
         }
+        List<SolicitudCompra> negociacionesAbiertas = solicitudes
+                .findByServicioIdAndEstado(servicioId, EstadoSolicitud.NEGOCIANDO);
         Instant ahora = Instant.now(reloj);
 
         // Cambiar la solicitud a activa
@@ -175,7 +178,6 @@ public class SolicitudCompraService {
         solicitudes.save(solicitud);
 
         // Cambiar el servicio a activo (ocupado/contratado)
-        Servicio servicio = solicitud.getServicio();
         servicio.activar();
         servicios.save(servicio);
 
@@ -201,7 +203,7 @@ public class SolicitudCompraService {
                                 + "» se canceló automáticamente porque el servicio fue contratado en otra negociación.");
             }
         }
-        
+
         return solicitud;
     }
 

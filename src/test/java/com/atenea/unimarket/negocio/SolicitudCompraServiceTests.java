@@ -3,6 +3,10 @@ package com.atenea.unimarket.negocio;
 import java.util.List;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -134,6 +138,39 @@ class SolicitudCompraServiceTests {
         assertThatThrownBy(() -> solicitudes.aceptar(solicitudId, aceptanteId, vigente(solicitudId)))
                 .isInstanceOf(SolicitudNoPermitidaException.class);
         assertThat(notificacionRepository.count()).isEqualTo(cantidad);
+    }
+
+    @Test
+    void aceptarSolicitudesConcurrentesDelMismoServicioConfirmaUnSoloAcuerdo() throws Exception {
+        Integer claraId = perfiles.registrar("sub-clara", "clara@unal.edu.co", "Clara", "3201112233", List.of())
+                .getUsuario().getId();
+        Integer primera = solicitudes.crear(betoId, servicioId, null).getId();
+        Integer segunda = solicitudes.crear(claraId, servicioId, null).getId();
+        CyclicBarrier salida = new CyclicBarrier(2);
+        List<Callable<EstadoSolicitud>> intentos = List.of(primera, segunda).stream().<Callable<EstadoSolicitud>>map(id -> {
+            Integer propuestaId = vigente(id);
+            return () -> {
+                salida.await(5, TimeUnit.SECONDS);
+                try {
+                    return solicitudes.aceptar(id, anaId, propuestaId).getEstado();
+                } catch (SolicitudNoPermitidaException e) {
+                    assertThat(e).hasMessageContaining("ya fue contratado");
+                    return solicitudRepository.findById(id).orElseThrow().getEstado();
+                }
+            };
+        }).toList();
+
+        try (var hilos = Executors.newFixedThreadPool(2)) {
+            var resultados = hilos.invokeAll(intentos, 10, TimeUnit.SECONDS);
+            assertThat(List.of(resultados.get(0).get(), resultados.get(1).get()))
+                    .containsExactlyInAnyOrder(EstadoSolicitud.ACTIVA, EstadoSolicitud.CANCELADA);
+        }
+
+        assertThat(solicitudRepository.findByServicioIdAndEstado(servicioId, EstadoSolicitud.ACTIVA)).hasSize(1);
+        List<SolicitudCompra> canceladas = solicitudRepository.findByServicioIdAndEstado(servicioId, EstadoSolicitud.CANCELADA);
+        assertThat(canceladas).hasSize(1);
+        assertThat(notificaciones.deUsuario(canceladas.getFirst().getCliente().getId()))
+                .extracting(Notificacion::getTipo).containsExactly(TipoNotificacion.SOLICITUD_RECHAZADA);
     }
 
     @Test

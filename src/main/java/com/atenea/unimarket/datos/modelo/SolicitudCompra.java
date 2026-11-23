@@ -79,7 +79,7 @@ public class SolicitudCompra {
         this.estado = EstadoSolicitud.CERRADA;
         this.fechaUltimaActividad = ahora;
     }
-    
+
     private void exigirNegociando() {
         if (estado != EstadoSolicitud.NEGOCIANDO) {
             throw new IllegalStateException("La solicitud ya no está en negociación.");
