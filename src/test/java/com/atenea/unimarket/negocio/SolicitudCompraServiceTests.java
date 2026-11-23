@@ -174,6 +174,41 @@ class SolicitudCompraServiceTests {
     }
 
     @Test
+    void elClientePuedeConfirmarLaEntregaUnaSolaVezYConservarElAcuerdo() {
+        Integer solicitudId = solicitudes.crear(betoId, servicioId, 20000).getId();
+        assertThatThrownBy(() -> solicitudes.confirmarFinalizacion(solicitudId, betoId))
+                .isInstanceOf(SolicitudNoPermitidaException.class);
+
+        solicitudes.contraproponer(solicitudId, anaId, 30000, 6);
+        Integer acuerdoId = vigente(solicitudId);
+        solicitudes.aceptar(solicitudId, betoId, acuerdoId);
+        int notificacionesDelCliente = notificaciones.deUsuario(betoId).size();
+        long cantidadAntesDelCierre = notificacionRepository.count();
+
+        assertThatThrownBy(() -> solicitudes.confirmarFinalizacion(solicitudId, anaId))
+                .isInstanceOf(SolicitudNoPermitidaException.class);
+        assertThat(solicitudRepository.findById(solicitudId).orElseThrow().getEstado()).isEqualTo(EstadoSolicitud.ACTIVA);
+        assertThat(servicios.findById(servicioId).orElseThrow().getEstado()).isEqualTo(EstadoServicio.ACTIVO);
+        assertThat(notificacionRepository.count()).isEqualTo(cantidadAntesDelCierre);
+
+        solicitudes.confirmarFinalizacion(solicitudId, betoId);
+
+        assertThat(solicitudRepository.findById(solicitudId).orElseThrow().getEstado()).isEqualTo(EstadoSolicitud.CERRADA);
+        assertThat(servicios.findById(servicioId).orElseThrow().getEstado()).isEqualTo(EstadoServicio.CERRADO);
+        assertThat(propuestaRepository.findBySolicitudIdOrderByNumeroRondaAsc(solicitudId)).hasSize(2);
+        assertThat(vigente(solicitudId)).isEqualTo(acuerdoId);
+        assertThat(notificaciones.deUsuario(betoId)).hasSize(notificacionesDelCliente);
+        assertThat(notificaciones.deUsuario(anaId)).anySatisfy(aviso -> {
+            assertThat(aviso.getSolicitud().getId()).isEqualTo(solicitudId);
+            assertThat(aviso.getMensaje()).contains("confirmó la finalización", "$30.000 COP", "6 horas por semana");
+        });
+
+        assertThatThrownBy(() -> solicitudes.confirmarFinalizacion(solicitudId, betoId))
+                .isInstanceOf(SolicitudNoPermitidaException.class);
+        assertThat(notificacionRepository.count()).isEqualTo(cantidadAntesDelCierre + 1);
+    }
+
+    @Test
     void operacionesInvalidasNoNotifican() {
         Integer solicitudId = solicitudes.crear(betoId, servicioId, null).getId();
 
