@@ -207,6 +207,49 @@ public class SolicitudCompraService {
         return solicitud;
     }
 
+
+    /**
+     * COMPRA-CLI-H05: el cliente confirma la finalización del servicio contratado. Valida que
+     * exista un acuerdo activo con tarifa e intensidad horaria definidas, marca la solicitud
+     * como CERRADA y el servicio como CERRADO, conserva el historial y notifica al ofertador.
+     */
+    @Transactional
+    public SolicitudCompra confirmarFinalizacion(Integer solicitudId, Integer usuarioId) {
+        SolicitudCompra solicitud = solicitudes.findById(solicitudId)
+                .orElseThrow(SolicitudNoEncontradaException::new);
+
+        if (!solicitud.getCliente().getId().equals(usuarioId)) {
+            throw new SolicitudNoPermitidaException("Solo el cliente puede confirmar la finalización del servicio.");
+        }
+        if (solicitud.getEstado() != EstadoSolicitud.ACTIVA) {
+            throw new SolicitudNoPermitidaException("Solo se puede finalizar una solicitud que esté activa.");
+        }
+
+        Propuesta acuerdo = propuestas.findFirstBySolicitudIdOrderByNumeroRondaDesc(solicitudId)
+                .orElseThrow(() -> new IllegalStateException("No existe una propuesta acordada para esta solicitud."));
+
+        if (acuerdo.getTarifaPorHora() <= 0 || acuerdo.getIntensidadHoraria() <= 0) {
+            throw new SolicitudNoPermitidaException("El acuerdo no tiene tarifa e intensidad horaria válidas.");
+        }
+
+        Instant ahora = Instant.now(reloj);
+        solicitud.cerrar(ahora);
+        solicitudes.save(solicitud);
+
+        Servicio servicio = solicitud.getServicio();
+        servicio.cerrar();
+        servicios.save(servicio);
+
+        notificador.notificar(
+                servicio.getOfertador(),
+                solicitud,
+                TipoNotificacion.ACUERDO_CONFIRMADO,
+                solicitud.getCliente().getNombre() + " confirmó la finalización del servicio «"
+                        + servicio.getTitulo() + "» (" + pesos(acuerdo.getTarifaPorHora()) + " por hora, "
+                        + acuerdo.getIntensidadHoraria() + " horas por semana). La solicitud quedó cerrada.");
+
+        return solicitud;
+    }
     /**
      * The offerer rejects without a counterproposal: the request becomes CANCELADA, the client is
      * notified and the service stays as it was (still available).
