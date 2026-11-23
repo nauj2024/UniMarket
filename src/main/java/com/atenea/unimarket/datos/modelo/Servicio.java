@@ -109,6 +109,14 @@ public class Servicio {
     public void activar(){
         this.estado = EstadoServicio.ACTIVO;
     }
+
+    public void cerrar() {
+        if (this.estado != EstadoServicio.ACTIVO) {
+            throw new IllegalStateException("Solo se puede cerrar un servicio que esté activo.");
+        }
+        this.estado = EstadoServicio.CERRADO;
+    }
+
     /** Whether the given rate or weekly hours differ from the ones published. */
     public boolean cambiaCondiciones(int tarifaPorHora, int intensidadHoraria) {
         return !this.tarifaPorHora.equals(tarifaPorHora) || !this.intensidadHoraria.equals(intensidadHoraria);
