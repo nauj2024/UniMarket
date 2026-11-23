@@ -144,6 +144,14 @@ public class SolicitudCompraService {
         SolicitudCompra solicitud = solicitudes.findById(solicitudId)
                 .orElseThrow(SolicitudNoEncontradaException::new);
 
+        Integer servicioId = solicitud.getServicio().getId();
+        List<SolicitudCompra> negociacionesAbiertas = solicitudes
+                .findByServicioIdAndEstado(servicioId, EstadoSolicitud.NEGOCIANDO);
+
+        if (solicitud.getServicio().getEstado() != EstadoServicio.DISPONIBLE
+                || solicitudes.existsByServicioIdAndEstadoIn(servicioId, List.of(EstadoSolicitud.ACTIVA))) {
+            throw new SolicitudNoPermitidaException("Este servicio ya fue contratado en otra negociación.");
+        }
         exigirParticipante(solicitud, usuarioId);
         if (solicitud.getEstado() != EstadoSolicitud.NEGOCIANDO) {
             throw new SolicitudNoPermitidaException("La solicitud no se encuentra en negociación.");
@@ -178,6 +186,22 @@ public class SolicitudCompraService {
         notificador.notificar(solicitud.getCliente(), solicitud, TipoNotificacion.ACUERDO_CONFIRMADO, mensaje);
         notificador.notificar(servicio.getOfertador(), solicitud, TipoNotificacion.ACUERDO_CONFIRMADO, mensaje);
 
+        for (SolicitudCompra competidora : negociacionesAbiertas) {
+            if (competidora.getId().equals(solicitud.getId())) {
+                continue;
+            }
+            if (competidora.getEstado() == EstadoSolicitud.NEGOCIANDO) {
+                competidora.cancelar(ahora);
+                solicitudes.save(competidora);
+                notificador.notificar(
+                        competidora.getCliente(),
+                        competidora,
+                        TipoNotificacion.SOLICITUD_RECHAZADA,
+                        "Tu solicitud para «" + servicio.getTitulo()
+                                + "» se canceló automáticamente porque el servicio fue contratado en otra negociación.");
+            }
+        }
+        
         return solicitud;
     }
 
