@@ -71,6 +71,15 @@ public class SolicitudCompra {
         this.fechaUltimaActividad = ahora;
     }
 
+    /** COMPRA-CLI-H05: the client confirms the service finished; the request becomes closed. */
+    public void cerrar(Instant ahora) {
+        if (estado != EstadoSolicitud.ACTIVA) {
+            throw new IllegalStateException("Solo se puede cerrar una solicitud que esté activa.");
+        }
+        this.estado = EstadoSolicitud.CERRADA;
+        this.fechaUltimaActividad = ahora;
+    }
+    
     private void exigirNegociando() {
         if (estado != EstadoSolicitud.NEGOCIANDO) {
             throw new IllegalStateException("La solicitud ya no está en negociación.");
