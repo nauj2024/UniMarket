@@ -18,5 +18,5 @@ public interface SolicitudCompraRepository extends JpaRepository<SolicitudCompra
 
      List<SolicitudCompra> findByEstado(EstadoSolicitud estado);
      @Lock(LockModeType.PESSIMISTIC_WRITE)
-     List<SolicitudCompra> findByServicioIdAndEstado(Integer servicioId, EstadoSolicitud estado);2
+     List<SolicitudCompra> findByServicioIdAndEstado(Integer servicioId, EstadoSolicitud estado);
 }
