@@ -113,6 +113,11 @@ public class SolicitudCompraController {
         model.addAttribute("esMiTurno", esMiTurno);
         model.addAttribute("puedeRechazar", esOfertador && solicitud.getEstado() == EstadoSolicitud.NEGOCIANDO);
         model.addAttribute("puedeRetirar", esCliente && solicitud.getEstado() == EstadoSolicitud.NEGOCIANDO);
+        model.addAttribute("puedeFinalizar", esCliente && solicitud.getEstado() == EstadoSolicitud.ACTIVA);
+        model.addAttribute("acuerdoFinal",
+                (solicitud.getEstado() == EstadoSolicitud.ACTIVA || solicitud.getEstado() == EstadoSolicitud.CERRADA)
+                        ? ultimaPropuesta
+                        : null);
         model.addAttribute("formato", new ServicioController.FormatoPesos());
         model.addAttribute("fecha", new FormatoFecha());
         return "solicitud/ver";
@@ -176,6 +181,20 @@ public class SolicitudCompraController {
         return "redirect:/solicitudes/" + id;
     }
 
+    @PostMapping("/solicitudes/{id}/finalizar")
+    public String finalizar(@AuthenticationPrincipal OidcUser oidc, @PathVariable Integer id,
+            RedirectAttributes redireccion) {
+        try {
+            solicitudes.confirmarFinalizacion(id, usuarioActual(oidc).getId());
+            redireccion.addFlashAttribute("mensaje", "Confirmaste la finalización del servicio. La solicitud quedó cerrada.");
+        } catch (SolicitudNoEncontradaException noExiste) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        } catch (SolicitudNoPermitidaException | IllegalStateException noPermitida) {
+            redireccion.addFlashAttribute("aviso", noPermitida.getMessage());
+        }
+        return "redirect:/solicitudes/" + id;
+    }
+    
     @GetMapping("/notificaciones")
     public String notificaciones(@AuthenticationPrincipal OidcUser oidc, Model model) {
         Integer usuarioId = usuarioActual(oidc).getId();
