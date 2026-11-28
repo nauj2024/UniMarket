@@ -51,7 +51,35 @@
                 </div>
             </dl>
         </section>
+<!-- SECCIÓN DE ACUERDO Y FINALIZACIÓN DEL SERVICIO (COMPRA-CLI-H05) -->
+        <section th:if="${acuerdoFinal != null}" class="panel mt-6" aria-labelledby="acuerdo-final">
+            <h2 id="acuerdo-final">Condiciones acordadas</h2>
+            <dl class="facts">
+                <div>
+                    <dt>Tarifa acordada</dt>
+                    <dd th:text="${formato.pesos(acuerdoFinal.tarifaPorHora)}">$25.000 COP</dd>
+                </div>
+                <div>
+                    <dt>Intensidad horaria acordada</dt>
+                    <dd th:text="${acuerdoFinal.intensidadHoraria + ' horas por semana'}">4 horas por semana</dd>
+                </div>
+            </dl>
 
+            <form th:if="${puedeFinalizar}" th:action="@{/solicitudes/{id}/finalizar(id=${solicitud.id})}" method="post" class="mt-6">
+                <p class="text-muted">Cuando el servicio contratado haya terminado, confirma su finalización para cerrar definitivamente esta solicitud:</p>
+                <button type="submit" class="btn btn-success fw-bold">
+                    ✓ Confirmar finalización del servicio
+                </button>
+            </form>
+
+            <div th:if="${solicitud.estado.name() == 'ACTIVA' and !puedeFinalizar}" class="alert theme-warning mt-6" role="status">
+                <p><strong>Servicio en curso:</strong> El acuerdo está activo. Cuando finalice, el cliente podrá confirmar el cierre de la solicitud.</p>
+            </div>
+
+            <div th:if="${solicitud.estado.name() == 'CERRADA'}" class="alert theme-success mt-6" role="status">
+                <p><strong>Servicio finalizado y cerrado:</strong> Esta solicitud se encuentra cerrada de forma definitiva y no admite modificaciones posteriores. El historial de propuestas se conserva abajo para consulta.</p>
+            </div>
+        </section>
         <section class="panel" aria-labelledby="historial">
             <h2 id="historial">Propuestas</h2>
             <table class="table">
